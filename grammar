@@ -1,97 +1,82 @@
-#gramatica
 
-       program : list_functions main
-				   							
-list_functions : list_functions FUN ID LPARENT arguments RPARENT locals BEGIN staments END
-				   | #empty
+program : function
+		| program function
 
-          main : FUN MAIN LPARENT arguments RPARENT locals BEGIN staments END
+function : FUN ID arguments locals BEGIN statements END
 
-     arguments : declaration_variables
-			   	| #empty
+arguments : LPAREN RPAREN
+		  | LPAREN declaration_variables RPAREN
 
-	locals : declaration_variables SEMICOLON locals
-	       | declaration_functions SEMICOLON locals
-	       | #empty
+declaration_variables : param
+					  | declaration_variables COMMA param
 
- declaration_variables : ID COLON tipo
-							  | ID COLON tipo LBRACKET INUMERO RBRACKET
-							  | arguments COMMA ID COLON tipo
-							  | arguments COMMA ID COLON tipo LBRACKET INUMERO RBRACKET
+param : ID COLON type
+	  | ID COLON ID
 
-tipo : INT
-     | FLOAT
+locals : dec_list SEMICOLON
+	   | empty
 
-declaration_functions : FUN ID LPARENT arguments RPARENT locals BEGIN staments END SEMICOLON
-							 | declaration_functions FUN ID LPARENT arguments RPARENT locals BEGIN staments END SEMICOLON
+dec_list : var_dec
+		 | dec_list SEMICOLON var_dec
 
-	      staments : stament
-			 	      | stament SEMICOLON stament
+var_dec : param
+		| function
 
-	      stament : while
-					  | if
-					  | if_else
-					  | assign
-					  | print
-					  | write
-					  | read
-					  | return
-					  | ID LPARENT expression RPARENT #llamado a una funcion
-					  | SKIP SEMICOLON
-					  | BREAK SEMICOLON
-	
+type : INT
+	 | FLOAT
+	 | INT LBRACKET expression RBRACKET
+	 | FLOAT LBRACKET expression RBRACKET
 
-		while : WHILE relation do staments
-				| WHILE relation BEGIN staments end
-			
-		   if : IF relation then staments SEMICOLON
-				| IF relation then BEGIN staments END SEMICOLON
+staments : stament
+         | staments SEMICOLON statement
 
-	      if_else : IF ralation then staments else staments SEMICOLON
+stament : WHILE relation DO stament				#while
+		| IF relation THEN stament else 		#if
+		| ID COLONEQUAL expression 				#assign
+		| PRINT LPARENT TEXT RPARENT 			#print
+		| WRITE LPARENT expression RPARENT 		#write
+		| READ LPARENT location_read RPARENT	#read
+		| RETURN expression 					#return
+		| ID LPARENT expression RPARENT			#call function
+		| SKIP SEMICOLON						#skip
+		| BREAK SEMICOLON						#break
+		| BEGIN staments END					#begin end
+				
+else : ELSE stament
+	 | empty
 
-	       assign : ID COLONEQUAL expression SEMICOLON 
+location_read : ID
+			  | ID LBRACKET expression RBRACKET
 
-		print : PRINT LPARENT TEXT RPARENT SEMICOLON
+expression : expression PLUS expression
+		   | expression DIVIDE expression
+		   | expression MULT expression
+		   | expression MINUS expression
+		   | MINUS expression
+		   | LPARENT expression RPARENT
+		   | ID LPARENT expression_list RPARENT
+		   | ID
+		   | ID LBRACKET expression RBRACKET
+		   | INUMERO
+		   | FNUMERO
+		   | INT LPARENT expression RPARENT
+		   | FLOAT LPARENT expression RPARENT
 
-		write : LPARENT expression RPARENT SEMICOLON
-
-		 read : LPARENT location_read RPARENT SEMICOLON
-		
-	       return : expression SEMICOLON
-
-	location_read : ID
-					  | ID LBRACKET expression RBRACKET
-
-	  expression : expression PLUS expression
-					 | expression DIVIDE expression
-					 | expression MULT expression
-					 | expression MINUS expression
-					 | MINUS expression
-					 | LPARENT expression RPARENT
-					 | ID LPARENT expression_list RPARENT
-					 | ID
-					 | ID LBRACKET expression RBRACKET
-					 | INUMERO
-					 | FNUMERO
 
 expression_list : expresion
-					 | expresion COMMA expression
-					 | #empty
+			    | expresion COMMA expression
+			    | #empty
 
 
-	 relation : expression GREATER expression
-				 | expression LESS expression
-				 | expression GREATEREQUAL expression
-				 | expression LESSEQUAL expression
-				 | expression DISTINT expression
-				 | expression NOT expression
-				 | expression OR expression
-				 | expression AND expression
-				 | NOT expression;
-				 | LPARENT expression RPARENT 
-
-
-
-
+relation : expression GREATER expression
+		 | expression LESS expression
+		 | expression GREATEREQUAL expression
+		 | expression LESSEQUAL expression
+		 | expression DISTINT expression
+		 | expression NOT expression
+		 | expression OR expression
+		 | expression AND expression
+		 | NOT expression
+		 | LPARENT expression RPARENT 
 
 

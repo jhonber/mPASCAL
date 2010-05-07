@@ -12,7 +12,7 @@ reserved = (
 # Reserverd words 
 #DONE
 'ELSE','IF','INT','FLOAT','RETURN','WHILE','FUN','BEGIN','DO','THEN',
-'END','MAIN','PRINT','READ','WRITE','SKIP','BREAK','AND','OR','NOT',
+'END','PRINT','READ','WRITE','SKIP','BREAK','AND','OR','NOT',
 )
 
 reserved_map = { }
@@ -30,6 +30,7 @@ tokens = reserved + (
 'ID', 
 'INUMBER',
 'FNUMBER',
+'UMINUS',
 ##'CHARACTER',
 'TEXT',
 )
@@ -100,7 +101,7 @@ def t_CHARACTER(t):
 # Para contar el numero de lineas 
 def t_newline(t):
     r'\n+'
-    t.lexer.lineno += len(t.value)-1
+    t.lexer.lineno += len(t.value)
 
 # Ignored tokens
 t_ignore = ' \t'
@@ -145,7 +146,7 @@ def run_lexer():
     while 1:
         token = lex.token()       # Get a token
         if not token: break        # No more tokens
-        print "(%s,'%s',%d)" % (token.type, token.value, token.lineno)
+        print "(%s,'%s',%d)" % (token.type, token.value, token.lineno-1)
 
 lex.lex()
 
