@@ -62,7 +62,9 @@ tokens = (
 
 # Others   
 'ID', 
-'NUMBER',
+'INUMBER',
+'FNUMBER',
+'CHARACTER',
 'TEXT',
 )
 
@@ -110,7 +112,7 @@ t_COLON = r':'
 t_LBRACKET = r'\['
 t_RBRACKET = r'\]'
 #t_COLONEQUAL = r':='
-t_QUOTE = r'\"'
+#t_QUOTE = r'\"'
 #t_ASLASHASTERISCO = r'\/*'
 #t_CSLASHASTERISCO = r'\*/'
 #t_SLASHCOMILLA = r'\\"'
@@ -138,14 +140,6 @@ def t_COLONEQUAL(t):
 	r':='
 	return t
 
-def t_NUMBER(t):
-    r'\d+'
-    try:
-        t.value = int(t.value)    
-    except ValueError:
-        print "Line %d: Number %s is too large!" % (t.lineno,t.value)
-        t.value = 0
-    return t
 
 def t_ELSE(t):
     r'else'
@@ -232,15 +226,47 @@ def t_NOT(t):
     r'not'
     return t
 
+def t_INUMBER(t):
+#    r'\d+'
+    r'0(?!\d)|([1-9]\d*)'
+    try:
+        t.value = int(t.value)    
+    except ValueError:
+        print "Line %d: Number %s is too large!" % (t.lineno,t.value)
+        t.value = 0
+    return t
+
+def t_malformed_inumber(t):
+    r'0\d+'
+    print "Line %d. Malformed integer '%s'" % (t.lineno, t.value)
+
+def t_FNUMBER(t):
+    r'((0(?!\d))|([1-9]\d*))((\.\d+(e[+-]?\d+)?)|(e[+-]?\d+))'
+    return t
+
+def t_malformed_fnumber(t):
+    r'(0\d+)((\.\d+(e[+-]?\d+)?)|(e[+-]?\d+))'
+    print "Line %d. Malformed floating point number '%s'" % (t.lineno, t.value)
+
 def t_ID(t):
-#    r'\w+(_\d\w)*'
-    r'[a-zA-Z_+=\*\-][a-zA-Z0-9_+\*\-]*'
+    r'[A-Za-z_][\w]*'
     t.type = reserved.get(t.value,'ID')    # Check for reserved words
     return t
     
 def t_TEXT(t):
-    r'\"[a-zA-ZáéíóúñÁ0-9_+\*\- :,]*\"'
-    t.type = reserved.get(t.value,'TEXT')    # Check for reserved words
+#    r'"[^\n]*?(?<!\\)"'
+#    t.type = reserved.get(t.value,'TEXT')    # Check for reserved words
+#    return t
+    r'"[^\n]*?(?<!\\)"'
+    temp_str = t.value.replace(r'\\', '')
+    m = re.search(r'\\[^n"]', temp_str)
+    if m != None:
+        print "Line %d. Unsupported character escape %s in string literal." % (t.lineno, m.group(0))
+        return
+    return t
+
+def t_CHARACTER(t):
+    r"'\w'"
     return t
 
 # Para contar el numero de lineas 
