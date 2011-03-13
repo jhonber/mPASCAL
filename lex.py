@@ -5,60 +5,27 @@
 #
 # tokenizer
 # ------------------------------------------------------------
-
-import ply.lex as lex
+import sys
 import re
+import ply.lex as lex
+
+reserved = (
+# Reserverd words
+'ELSE','IF','INT','FLOAT','RETURN','WHILE','FUN','BEGIN','DONE','DO','THEN',
+'END','MAIN','PRINT','READ','WRITE','SKIP','BREAK','AND','OR','NOT',
+)
+
+reserved_map = { }
+for r in reserved:
+	reserved_map[r] = r
 
 # List of token names.   
-tokens = (
-# Reserverd words
-'ELSE',
-'IF',
-'INT',
-'FLOAT',
-'RETURN',
-'WHILE',
-'FUN',
-'BEGIN',
-'DONE',
-'DO',
-'THEN',
-'END',
-'MAIN',
-'PRINT',
-'READ',
-'WRITE',
-'SKIP',
-'BREAK',
-'AND',
-'OR',
-'NOT',
+tokens = reserved + (
 # Symbols
-
-'PLUS',
-'MINUS',
-'DIVIDE',
-'MULT',
-'LESS',
-'LESSEQUAL',
-'GREATER',
-'GREATEREQUAL',
-'DEQUAL',
-'DISTINT',
-'SEMICOLON',
-'COMMA',
-'LPAREN',
-'RPAREN',
-'COLON',
-'LBRACKET',
-'RBRACKET',
-'COLONEQUAL',
-'QUOTE',
-'ASLASHASTERISCO',
-'CSLASHASTERISCO',
-'SLASHCOMILLA',
-'SLASHN',
-'SLASHSLASH',
+'PLUS','MINUS','DIVIDE','MULT','LESS','LESSEQUAL','GREATER','GREATEREQUAL',
+'DEQUAL','DISTINT','SEMICOLON','COMMA','LPAREN','RPAREN','COLON','LBRACKET',
+'RBRACKET','COLONEQUAL','QUOTE','ASLASHASTERISCO','CSLASHASTERISCO','SLASHCOMILLA',
+'SLASHN','SLASHSLASH',
 
 # Others   
 'ID', 
@@ -68,42 +35,18 @@ tokens = (
 'TEXT',
 )
 
-reserved = {
-    'break' : 'BREAK',
-    'do' : 'DO',
-    'else' : 'ELSE',
-    'float' : 'FLOAT',
-    'if' : 'IF',
-    'int' : 'INT',
-    'return' : 'RETURN',
-    'while' : 'WHILE',
-    'not' : 'NOT',
-    'fun' : 'FUN',
-    'begin' : 'BEGIN',
-    'done' : 'DONE',
-    'then' : 'THEN',
-    'end' : 'END',
-    'main' : 'MAIN',
-    'print' : 'PRINT',
-    'read' : 'READ',
-    'write' : 'WRITE',
-    'skip' : 'SKIP',
-    'and' : 'AND',
-    'or' : 'OR',
-}
-
 # Regular expression rules for simple tokens
-#t_ID = r'[a-zA-Z_][\w_]*'
 t_PLUS = r'\+'
 t_MINUS = r'-'
 t_DIVIDE = r'/'
 t_MULT = r'\*'
-t_LESS = r'<'
-#t_LESSEQUAL = r'<='
+t_LESSEQUAL = r'<='
+t_GREATEREQUAL  = r'>='
+t_DEQUAL = r'=='
+t_DISTINT = r'!='
+t_COLONEQUAL = r':='
 t_GREATER = r'>'
-#t_GREATEREQUAL  = r'>='
-#t_DEQUAL = r'=='
-#t_DISTINT = r'!='
+t_LESS = r'<'
 t_SEMICOLON = r';'
 t_COMMA = r','
 t_LPAREN = r'\('
@@ -111,158 +54,45 @@ t_RPAREN = r'\)'
 t_COLON = r':'
 t_LBRACKET = r'\['
 t_RBRACKET = r'\]'
-#t_COLONEQUAL = r':='
-#t_QUOTE = r'\"'
+t_QUOTE = r'\"'
 #t_ASLASHASTERISCO = r'\/*'
 #t_CSLASHASTERISCO = r'\*/'
-#t_SLASHCOMILLA = r'\\"'
+t_SLASHCOMILLA = r'\\"'
 #t_SLASHN = r''
-#t_SLASHSLASH = r'\//'
+t_SLASHSLASH = r'\//'
 
-
-def t_LESSEQUAL(t):
-	r'<='
-	return t
-
-def t_GREATEREQUAL(t):
-	r'>='
-	return t
-
-def t_DEQUAL(t):
-	r'=='
-	return t
-
-def t_DISTINT(t):
-	r'!='
-	return t
-
-def t_COLONEQUAL(t):
-	r':='
-	return t
-
-
-def t_ELSE(t):
-    r'else'
-    return t
-
-def t_IF(t):
-    r'if'
-    return t
-
-def t_INT(t):
-    r'int'
-    return t
-
-def t_FLOAT(t):
-    r'float'
-    return t
-
-def t_RETURN(t):
-    r'return'
-    return t
-
-def t_WHILE(t):
-    r'while'
-    return t
-
-
-def t_FUN(t):
-    r'fun'
-    return t
-
-def t_BEGIN(t):
-    r'begin'
-    return t
-
-def t_DONE(t):
-    r'done'
-    return t
-
-def t_DO(t):
-    r'do'
-    return t
-
-def t_THEN(t):
-    r'then'
-    return t
-
-def t_END(t):
-    r'end'
-    return t
-
-def t_MAIN(t):
-    r'main'
-    return t
-
-def t_PRINT(t):
-    r'print'
-    return t
-
-def t_READ(t):
-    r'read'
-    return t
-
-def t_WRITE(t):
-    r'write'
-    return t
-
-def t_SKIP(t):
-    r'skip'
-    return t
-
-def t_BREAK(t):
-    r'break'
-    return t
-
-def t_AND(t):
-    r'and'
-    return t
-
-def t_OR(t):
-    r'or'
-    return t
-
-def t_NOT(t):
-    r'not'
+def t_ID(t):
+    r'[A-Za-z_][\w]*'
+    t.type = reserved_map.get(t.value.upper(),'ID')    # Check for reserved words
     return t
 
 def t_INUMBER(t):
-#    r'\d+'
     r'0(?!\d)|([1-9]\d*)'
     try:
         t.value = int(t.value)    
     except ValueError:
-        print "Line %d: Number %s is too large!" % (t.lineno,t.value)
+        print "Linea %d: Numero %s es muy grande!" % (t.lineno,t.value)
         t.value = 0
     return t
-
-def t_malformed_inumber(t):
-    r'0\d+'
-    print "Line %d. Malformed integer '%s'" % (t.lineno, t.value)
 
 def t_FNUMBER(t):
     r'((0(?!\d))|([1-9]\d*))((\.\d+(e[+-]?\d+)?)|(e[+-]?\d+))'
     return t
 
+def t_malformed_inumber(t):
+    r'0\d+'
+    print "Linea %d. Entero mal formado '%s'" % (t.lineno, t.value)
+
 def t_malformed_fnumber(t):
     r'(0\d+)((\.\d+(e[+-]?\d+)?)|(e[+-]?\d+))'
-    print "Line %d. Malformed floating point number '%s'" % (t.lineno, t.value)
+    print "Linea %d. Malformado numero float '%s'" % (t.lineno, t.value)
 
-def t_ID(t):
-    r'[A-Za-z_][\w]*'
-    t.type = reserved.get(t.value,'ID')    # Check for reserved words
-    return t
-    
 def t_TEXT(t):
-#    r'"[^\n]*?(?<!\\)"'
-#    t.type = reserved.get(t.value,'TEXT')    # Check for reserved words
-#    return t
     r'"[^\n]*?(?<!\\)"'
     temp_str = t.value.replace(r'\\', '')
     m = re.search(r'\\[^n"]', temp_str)
     if m != None:
-        print "Line %d. Unsupported character escape %s in string literal." % (t.lineno, m.group(0))
-        return
+        print "Linea %d. Caracter de escape no soportado %s en string." % (t.lineno, m.group(0))
     return t
 
 def t_CHARACTER(t):
@@ -310,4 +140,5 @@ lex.lex()
 
 if __name__ == '__main__':
     run_lexer()
+
 
