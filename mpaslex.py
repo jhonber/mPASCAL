@@ -37,7 +37,7 @@ tokens = reserved + (
 # Regular expression rules for simple tokens
 t_PLUS = r'\+'
 t_MINUS = r'-'
-t_DIVIDE = r'/'
+t_DIVIDE = r'/(?!\*)'
 t_MULT = r'\*'
 t_LESSEQUAL = r'<='
 t_GREATEREQUAL  = r'>='
@@ -53,17 +53,34 @@ t_RPAREN = r'\)'
 t_COLON = r':'
 t_LBRACKET = r'\['
 t_RBRACKET = r'\]'
-t_QUOTE = r'\"'
+#t_QUOTE = r'\"'
 #t_ASLASHASTERISCO = r'\/*'
 #t_CSLASHASTERISCO = r'\*/'
 t_SLASHCOMILLA = r'\\"'
 #t_SLASHN = r''
-t_SLASHSLASH = r'\//'
+#t_SLASHSLASH = r'\//'
+
+def t_malformed_id(t):
+	r'((\\)|(\d+))[A-Za-z]'
+	print "Linea %d: Identificador no válido '%s'" % (t.lineno,t.value)
 
 def t_ID(t):
     r'[A-Za-z_][\w]*'
     t.type = reserved_map.get(t.value.upper(),'ID')    # Check for reserved words
     return t
+
+def t_malformed_fnumber(t):
+    r'((0\d+)((\.\d+(e[+-]?\d+)?)|(e[+-]?\d+))) | (\d*(\.\d*(\.)\w*)) | ((\d+)(\.\d*(e[+-]?(?!\d))?)) '
+    print "Linea %d. Malformado numero float '%s'" % (t.lineno, t.value)
+
+def t_FNUMBER(t):
+    r'((0(?!\d))|([1-9]\d*))((\.\d+(e[+-]?\d+)?)|(e[+-]?\d+))'
+    return t
+
+
+def t_malformed_inumber(t):
+    r'0\d+'
+    print "Linea %d. Entero mal formado '%s'" % (t.lineno, t.value)
 
 def t_INUMBER(t):
     r'0(?!\d)|([1-9]\d*)'
@@ -73,18 +90,6 @@ def t_INUMBER(t):
         print "Linea %d: Numero %s es muy grande!" % (t.lineno,t.value)
         t.value = 0
     return t
-
-def t_FNUMBER(t):
-    r'((0(?!\d))|([1-9]\d*))((\.\d+(e[+-]?\d+)?)|(e[+-]?\d+))'
-    return t
-
-def t_malformed_inumber(t):
-    r'0\d+'
-    print "Linea %d. Entero mal formado '%s'" % (t.lineno, t.value)
-
-def t_malformed_fnumber(t):
-    r'(0\d+)((\.\d+(e[+-]?\d+)?)|(e[+-]?\d+))'
-    print "Linea %d. Malformado numero float '%s'" % (t.lineno, t.value)
 
 def t_TEXT(t):
     r'"[^\n]*?(?<!\\)"'
@@ -106,14 +111,27 @@ def t_newline(t):
 # Ignored tokens
 t_ignore = ' \t'
 
+def t_comment_error(t):
+	#r'/\*[\w\W/\*]*?'
+	r'/\*.*[/\*|\*/]+.*\*/'
+	print "Linea %d Comentario indeterminado. '%s'" % (t.lexer.lineno,t.value[0:2])
+
 def t_comments(t):
-	r'/*(.|\n)*?\*/'
+	r'/\*[\w\W]*?\*/'
 	t.lexer.lineno += t.value.count('\n')
 
 # Una regla para manejar errores.
 def t_error(t):
-    print "Caracter ilegal: '%s'" % t.value[0]
-    t.lexer.skip(1)
+    print "Linea %d." % (t.lexer.lineno,) + "",
+    if t.value[0] == '"':
+        print "Indeterminado string."
+        if t.value.count('\n') > 0:
+            t.skip(t.value.index('\n'))
+    elif t.value[0:2] == '/*':
+        print "Comentario indeterminado. '%s'" % (t.value[0:2])
+    else:
+        print "Caracter ilegal '%s'" % t.value[0]
+        t.lexer.skip(1)
 
 # Main Lexer functionality
 def run_lexer():
@@ -139,5 +157,4 @@ lex.lex()
 
 if __name__ == '__main__':
     run_lexer()
-
 
