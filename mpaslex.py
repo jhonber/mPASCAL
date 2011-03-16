@@ -56,7 +56,7 @@ t_RBRACKET = r'\]'
 #t_QUOTE = r'\"'
 #t_ASLASHASTERISCO = r'\/*'
 #t_CSLASHASTERISCO = r'\*/'
-t_SLASHCOMILLA = r'\\"'
+#t_SLASHCOMILLA = r'\\"'
 #t_SLASHN = r''
 #t_SLASHSLASH = r'\//'
 
@@ -133,12 +133,12 @@ def t_error(t):
         print "Caracter ilegal '%s'" % t.value[0]
         t.lexer.skip(1)
 
-# Main Lexer functionality
+# Funcion principal
 def run_lexer():
-    """This is just a debugging function that prints out a list of
-    tokens, it's not actually called by the compiler or anything."""
+    """
+	Funcion principal, lee un archivo desde la entrada estardar y devuelve los tokens
+    """
 
-    
     import sys
     file = open(sys.argv[1])
     lines = file.readlines()

@@ -1,1 +1,111 @@
 #grammar
+
+PLUS 		  ::= '\+'
+MINUS 		  ::= '-'
+DIVIDE 		  ::= '/(?!\*)'
+MULT 		  ::= '\*'
+LESSEQUAL 	  ::= '<='
+GREATEREQUAL  ::= '>='
+DEQUAL 		  ::= '=='
+DISTINT 	  ::= '!='
+COLONEQUAL 	  ::= ':='
+GREATER 	  ::= '>'
+LESS 		  ::= '<'
+SEMICOLON 	  ::= ';'
+COMMA 		  ::= ','
+LPAREN 		  ::= '\('
+RPAREN 		  ::= '\)'
+COLON 		  ::= ':'
+LBRACKET 	  ::= '\['
+RBRACKET 	  ::= '\]'
+
+	ID ::= ID ID |a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z
+                  |A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z
+                  |
+
+  FNUMBER ::= FNUMBER FNUMBER |1|2|3|4|5|6|7|8|9|
+  INUMBER ::= INUMBER INUMBER |1|2|
+     TEXT ::= '"[^\n]*?(?<!\\)"'
+CHARACTER ::= "'\w'"
+ comments ::= '/\*[\w\W]*?\*/'
+
+
+
+#Definicion de la gramatica
+
+PROGRAMA ::= LIST_FUNS
+
+LIST_FUNS ::= FUN
+	     |LIST_FUNS FUN
+
+FUN ::= 'fun' ID LPAREN ARGS RPAREN DECLARACIONES 'begin' PROCESO 'end' 
+
+ARGS ::= ID ':' TIPO
+       | ID ':' TIPO '[' INUMERO ']' 
+       | ARGS COMMA ID ':' TIPO COMMA
+       | ARGS COMMA ID ':' TIPO '[' INUMERO ']' COMMA
+       |
+
+TIPO ::= 'float'
+	|'int'
+
+DECLARACIONES ::= ID ':' TIPO ';'
+                 |ID ':' TIPO '[' TIPO ']' ';'   		  
+		 |DECLARACIONES ID ':' TIPO ';'
+		 |DECLARACIONES ID ':' '[' TIPO ']' ';'
+
+PROCESO ::=  ASIGNACION BUCLE FUNMPASCAL 
+	   | PROCESO
+
+ASIGNACION ::= ID ASIGN ID ';'
+	      |ID ASIGN FNUMBER ';'
+	      |ID ASIGN INUMERO ';'
+	      |ID ASIGN VECTOR ';'
+	      |ID ASIGN EXPRESION ';'
+	      |ID ASIGN FNUMBER
+
+BUCLE ::=  WHILE|IF
+
+WHILE ::=  ' while' COMPARACION 'do' 'begin' PROCESO 'end'
+	   |'while' COMPARACION 'skip'
+IF ::= 'if' COMPARACION 'then'PROCESO
+	   |COMPARACION 'then'PROCESO 'else' PROCESO
+
+FUNMPASCAL ::=  PRINT|WRITE|RETURN|READ 
+
+VECTOR ::=  ID '[' INUMERO ']'
+	   |ID '[' ID ']'
+
+
+PRINT ::= 'print' LPAREN CADTEX RPAREN ';'
+WRITE ::= 'write' LPAREN EXPRESION RPAREN ';'
+RETURN ::= 'return' EXPRESION ';'
+READ ::=  'read' LPAREN VECTOR RPAREN
+	   |read' LPAREN ID RPAREN
+
+EXPRESION ::= EXPRESION + EXPRESION
+	     |EXPRESION - EXPRESION
+	     |EXPRESION * EXPRESION
+	     |EXPRESION / EXPRESION
+	     |'-' EXPRESION
+	     |'+' EXPRESION
+	     |LPAREN EXPRESION RPAREN
+	     |ID LPAREN EXPRESION RPAREN
+	     |ID
+	     |INUMERO |FNUMBER
+	     |'int' LPAREN EXPRESION RPAREN	
+	     |'float' LPAREN EXPRESION RPAREN
+
+COMPARACION ::= EXPRESION GREATER EXPRESION
+		|EXPRESION MENOR EXPRESION
+		|EXPRESION GREATERI EXPRESION
+		|EXPRESION MENORI EXPRESION
+		|EXPRESION DIF EXPRESION
+		|EXPRESION 'not' EXPRESION
+	        |EXPRESION 'or' EXPRESION
+		|EXPRESION 'and' EXPRESION
+	        |'not' EXPRESION;
+
+
+
+
