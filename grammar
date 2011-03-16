@@ -19,92 +19,104 @@ COLON 		  ::= ':'
 LBRACKET 	  ::= '\['
 RBRACKET 	  ::= '\]'
 
-	ID ::= ID ID |a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z
-                  |A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z
-                  |
+	ID ::= '[A-Za-z_][\w]*'
 
-  FNUMBER ::= FNUMBER FNUMBER |1|2|3|4|5|6|7|8|9|
-  INUMBER ::= INUMBER INUMBER |1|2|
+  FNUMBER ::= '((0(?!\d))|([1-9]\d*))((\.\d+(e[+-]?\d+)?)|(e[+-]?\d+))'
+  INUMBER ::= '0(?!\d)|([1-9]\d*)'
      TEXT ::= '"[^\n]*?(?<!\\)"'
 CHARACTER ::= "'\w'"
  comments ::= '/\*[\w\W]*?\*/'
 
 
-
-#Definicion de la gramatica
-
 PROGRAMA ::= LIST_FUNS
 
 LIST_FUNS ::= FUN
-	     |LIST_FUNS FUN
+	         |LIST_FUNS FUN
 
-FUN ::= 'fun' ID LPAREN ARGS RPAREN DECLARACIONES 'begin' PROCESO 'end' 
 
-ARGS ::= ID ':' TIPO
+FUN ::= 'fun' ID '(' ARGS ')' LOCALES FUN 'begin' SENTENCIAS 'end'
+		|'fun' ID'('ARGS')' LOCALES 'begin' SENTENCIA 'end' FUNCION
+		|'fun' 'main''('')'LOCALES FUN 'begin' SENTENCIA RETURN 'end'
+
+ARGS ::= ID ':' TIPO 
        | ID ':' TIPO '[' INUMERO ']' 
-       | ARGS COMMA ID ':' TIPO COMMA
-       | ARGS COMMA ID ':' TIPO '[' INUMERO ']' COMMA
+       | ARGS ',' ID ':' TIPO ','
+       | ARGS ',' ID ':' TIPO '[' INUMERO ']' ','
        |
 
-TIPO ::= 'float'
-	|'int'
+TIPO ::= 'float' 
+	    |'int'
 
-DECLARACIONES ::= ID ':' TIPO ';'
-                 |ID ':' TIPO '[' TIPO ']' ';'   		  
-		 |DECLARACIONES ID ':' TIPO ';'
-		 |DECLARACIONES ID ':' '[' TIPO ']' ';'
+LOCALES ::= ID ':' TIPO ';' 
+                |ID ':' TIPO '[' TIPO ']' ';'   		  
+		 			 |LOCALES ID ':' TIPO ';'
+		 			 |LOCALES ID ':' '[' TIPO ']' ';'
+					 |
 
-PROCESO ::=  ASIGNACION BUCLE FUNMPASCAL 
-	   | PROCESO
+SENTENCIAS ::=  ASIGNACION
+	       | WHILE
+			 | IF
+			 | CALL
+			 |	FUNM
+			 |
 
-ASIGNACION ::= ID ASIGN ID ';'
-	      |ID ASIGN FNUMBER ';'
-	      |ID ASIGN INUMERO ';'
-	      |ID ASIGN VECTOR ';'
-	      |ID ASIGN EXPRESION ';'
-	      |ID ASIGN FNUMBER
+CALL ::= ID '(' ARGS ')';
 
-BUCLE ::=  WHILE|IF
+ASIGNACION ::= ID ':=' ID ';'
+	          |ID ':=' FNUMBER ';'
+	      	 |ID ':=' INUMERO ';'
+	      	 |ID ':=' VECT ';'
+	      	 |ID ':=' EXPRESION ';'
+	      	 |ID ':=' FNUMBER
 
-WHILE ::=  ' while' COMPARACION 'do' 'begin' PROCESO 'end'
-	   |'while' COMPARACION 'skip'
-IF ::= 'if' COMPARACION 'then'PROCESO
-	   |COMPARACION 'then'PROCESO 'else' PROCESO
+WHILE ::= 'while' CONDICIONES 'do' 'begin' SENTENCIAS 'end'
+			| 'while' CONDICIONES 'do' 'skip'
 
-FUNMPASCAL ::=  PRINT|WRITE|RETURN|READ 
+IF ::= 'if' CONDICIONES 'then' SENTENCIAS
+	   |'if' CONDICIONES 'then' SENTENCIAS 'else' SENTENCIAS
 
-VECTOR ::=  ID '[' INUMERO ']'
+CONDICIONES ::= EXPRESION '>' EXPRESION
+				|EXPRESION '<' EXPRESION
+				|EXPRESION '>=' EXPRESION
+				|EXPRESION '<=' EXPRESION
+				|EXPRESION '=!' EXPRESION
+				|EXPRESION 'not' EXPRESION
+	         |EXPRESION 'or' EXPRESION
+				|EXPRESION 'and' EXPRESION
+	         |'not' EXPRESION;
+
+FUNM ::=  PRINT
+			|WRITE
+			|RETURN
+			|READ 
+
+VECT ::=  ID '[' INUMERO ']'
 	   |ID '[' ID ']'
 
 
-PRINT ::= 'print' LPAREN CADTEX RPAREN ';'
-WRITE ::= 'write' LPAREN EXPRESION RPAREN ';'
+PRINT ::= 'print' '(' TEXT ')' ';'
+
+WRITE ::= 'write' '(' EXPRESION ')' ';'
+
 RETURN ::= 'return' EXPRESION ';'
-READ ::=  'read' LPAREN VECTOR RPAREN
-	   |read' LPAREN ID RPAREN
 
-EXPRESION ::= EXPRESION + EXPRESION
-	     |EXPRESION - EXPRESION
-	     |EXPRESION * EXPRESION
-	     |EXPRESION / EXPRESION
-	     |'-' EXPRESION
-	     |'+' EXPRESION
-	     |LPAREN EXPRESION RPAREN
-	     |ID LPAREN EXPRESION RPAREN
-	     |ID
-	     |INUMERO |FNUMBER
-	     |'int' LPAREN EXPRESION RPAREN	
-	     |'float' LPAREN EXPRESION RPAREN
+READ ::=  'read' '(' VECT ')'
+	   |read' '(' ID ')'
 
-COMPARACION ::= EXPRESION GREATER EXPRESION
-		|EXPRESION MENOR EXPRESION
-		|EXPRESION GREATERI EXPRESION
-		|EXPRESION MENORI EXPRESION
-		|EXPRESION DIF EXPRESION
-		|EXPRESION 'not' EXPRESION
-	        |EXPRESION 'or' EXPRESION
-		|EXPRESION 'and' EXPRESION
-	        |'not' EXPRESION;
+EXPRESION ::= EXPRESION '+' EXPRESION
+	     	|EXPRESION '-' EXPRESION
+	     	|EXPRESION '*' EXPRESION
+	     	|EXPRESION '/' EXPRESION
+	     	|'-' EXPRESION
+	     	|'+' EXPRESION
+	     	|'(' EXPRESION ')'
+	     	|ID '(' EXPRESION ')'
+	     	|ID
+			|VECT
+	     	|INUMERO |FNUMBER
+	     	|'int' '(' EXPRESION ')'	
+	     	|'float' '(' EXPRESION ')'
+
 
 
 
