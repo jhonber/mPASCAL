@@ -1,121 +1,95 @@
-#grammar
+#gramatica
 
-PLUS 		  ::= '\+'
-MINUS 		  ::= '-'
-DIVIDE 		  ::= '/(?!\*)'
-MULT 		  ::= '\*'
-LESSEQUAL 	  ::= '<='
-GREATEREQUAL  ::= '>='
-DEQUAL 		  ::= '=='
-DISTINT 	  ::= '!='
-COLONEQUAL 	  ::= ':='
-GREATER 	  ::= '>'
-LESS 		  ::= '<'
-SEMICOLON 	  ::= ';'
-COMMA 		  ::= ','
-LPAREN 		  ::= '\('
-RPAREN 		  ::= '\)'
-COLON 		  ::= ':'
-LBRACKET 	  ::= '\['
-RBRACKET 	  ::= '\]'
+       program : list_functions main
+				   							
+list_functions : list_functions FUN ID LPARENT arguments RPARENT locals BEGIN staments END
+				   | #empty
 
-	ID ::= '[A-Za-z_][\w]*'
+          main : FUN MAIN LPARENT arguments RPARENT locals BEGIN staments END
 
-  FNUMBER ::= '((0(?!\d))|([1-9]\d*))((\.\d+(e[+-]?\d+)?)|(e[+-]?\d+))'
-  INUMBER ::= '0(?!\d)|([1-9]\d*)'
-     TEXT ::= '"[^\n]*?(?<!\\)"'
-CHARACTER ::= "'\w'"
- comments ::= '/\*[\w\W]*?\*/'
+     arguments : declaration_variables
+			   	| #empty
 
+	locals : declaration_variables SEMICOLON locals
+	       | declaration_functions SEMICOLON locals
+	       | #empty
 
-PROGRAMA ::= LIST_FUNS
+ declaration_variables : ID COLON tipo
+							  | ID COLON tipo LBRACKET INUMERO RBRACKET
+							  | arguments COMMA ID COLON tipo
+							  | arguments COMMA ID COLON tipo LBRACKET INUMERO RBRACKET
 
-LIST_FUNS ::= FUN
-	         |LIST_FUNS FUN
+tipo : INT
+     | FLOAT
 
+declaration_functions : FUN ID LPARENT arguments RPARENT locals BEGIN staments END SEMICOLON
+							 | declaration_functions FUN ID LPARENT arguments RPARENT locals BEGIN staments END SEMICOLON
 
-FUN ::= 'fun' ID '(' ARGS ')' LOCALES FUN 'begin' SENTENCIAS 'end'
-		|'fun' ID'('ARGS')' LOCALES 'begin' SENTENCIA 'end' FUNCION
-		|'fun' 'main''('')'LOCALES FUN 'begin' SENTENCIA RETURN 'end'
+	      staments : stament
+			 	      | stament SEMICOLON stament
 
-ARGS ::= ID ':' TIPO 
-       | ID ':' TIPO '[' INUMERO ']' 
-       | ARGS ',' ID ':' TIPO ','
-       | ARGS ',' ID ':' TIPO '[' INUMERO ']' ','
-       |
+	      stament : while
+					  | if
+					  | if_else
+					  | assign
+					  | print
+					  | write
+					  | read
+					  | return
+					  | ID LPARENT expression RPARENT #llamado a una funcion
+					  | SKIP SEMICOLON
+					  | BREAK SEMICOLON
+	
 
-TIPO ::= 'float' 
-	    |'int'
+		while : WHILE relation do staments
+				| WHILE relation BEGIN staments end
+			
+		   if : IF relation then staments SEMICOLON
+				| IF relation then BEGIN staments END SEMICOLON
 
-LOCALES ::= ID ':' TIPO ';' 
-                |ID ':' TIPO '[' TIPO ']' ';'   		  
-		 			 |LOCALES ID ':' TIPO ';'
-		 			 |LOCALES ID ':' '[' TIPO ']' ';'
-					 |
+	      if_else : IF ralation then staments else staments SEMICOLON
 
-SENTENCIAS ::=  ASIGNACION
-	       | WHILE
-			 | IF
-			 | CALL
-			 |	FUNM
-			 |
+	       assign : ID COLONEQUAL expression SEMICOLON 
 
-CALL ::= ID '(' ARGS ')';
+		print : PRINT LPARENT TEXT RPARENT SEMICOLON
 
-ASIGNACION ::= ID ':=' ID ';'
-	          |ID ':=' FNUMBER ';'
-	      	 |ID ':=' INUMERO ';'
-	      	 |ID ':=' VECT ';'
-	      	 |ID ':=' EXPRESION ';'
-	      	 |ID ':=' FNUMBER
+		write : LPARENT expression RPARENT SEMICOLON
 
-WHILE ::= 'while' CONDICIONES 'do' 'begin' SENTENCIAS 'end'
-			| 'while' CONDICIONES 'do' 'skip'
+		 read : LPARENT location_read RPARENT SEMICOLON
+		
+	       return : expression SEMICOLON
 
-IF ::= 'if' CONDICIONES 'then' SENTENCIAS
-	   |'if' CONDICIONES 'then' SENTENCIAS 'else' SENTENCIAS
+	location_read : ID
+					  | ID LBRACKET expression RBRACKET
 
-CONDICIONES ::= EXPRESION '>' EXPRESION
-				|EXPRESION '<' EXPRESION
-				|EXPRESION '>=' EXPRESION
-				|EXPRESION '<=' EXPRESION
-				|EXPRESION '=!' EXPRESION
-				|EXPRESION 'not' EXPRESION
-	         |EXPRESION 'or' EXPRESION
-				|EXPRESION 'and' EXPRESION
-	         |'not' EXPRESION;
+	  expression : expression PLUS expression
+					 | expression DIVIDE expression
+					 | expression MULT expression
+					 | expression MINUS expression
+					 | MINUS expression
+					 | LPARENT expression RPARENT
+					 | ID LPARENT expression_list RPARENT
+					 | ID
+					 | ID LBRACKET expression RBRACKET
+					 | INUMERO
+					 | FNUMERO
 
-FUNM ::=  PRINT
-			|WRITE
-			|RETURN
-			|READ 
-
-VECT ::=  ID '[' INUMERO ']'
-	   |ID '[' ID ']'
+expression_list : expresion
+					 | expresion COMMA expression
+					 | #empty
 
 
-PRINT ::= 'print' '(' TEXT ')' ';'
+	 relation : expression GREATER expression
+				 | expression LESS expression
+				 | expression GREATEREQUAL expression
+				 | expression LESSEQUAL expression
+				 | expression DISTINT expression
+				 | expression NOT expression
+				 | expression OR expression
+				 | expression AND expression
+				 | NOT expression;
+				 | LPARENT expression RPARENT 
 
-WRITE ::= 'write' '(' EXPRESION ')' ';'
-
-RETURN ::= 'return' EXPRESION ';'
-
-READ ::=  'read' '(' VECT ')'
-	   |read' '(' ID ')'
-
-EXPRESION ::= EXPRESION '+' EXPRESION
-	     	|EXPRESION '-' EXPRESION
-	     	|EXPRESION '*' EXPRESION
-	     	|EXPRESION '/' EXPRESION
-	     	|'-' EXPRESION
-	     	|'+' EXPRESION
-	     	|'(' EXPRESION ')'
-	     	|ID '(' EXPRESION ')'
-	     	|ID
-			|VECT
-	     	|INUMERO |FNUMBER
-	     	|'int' '(' EXPRESION ')'	
-	     	|'float' '(' EXPRESION ')'
 
 
 
