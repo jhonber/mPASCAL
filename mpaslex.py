@@ -9,8 +9,9 @@ import re
 import ply.lex as lex
 
 reserved = (
-# Reserverd words
-'ELSE','IF','INT','FLOAT','RETURN','WHILE','FUN','BEGIN','DONE','DO','THEN',
+# Reserverd words 
+#DONE
+'ELSE','IF','INT','FLOAT','RETURN','WHILE','FUN','BEGIN','DO','THEN',
 'END','MAIN','PRINT','READ','WRITE','SKIP','BREAK','AND','OR','NOT',
 )
 
