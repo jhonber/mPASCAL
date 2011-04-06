@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 #------------------------------------------------------------
 # lex.py
@@ -24,14 +24,14 @@ tokens = reserved + (
 # Symbols
 'PLUS','MINUS','DIVIDE','MULT','LESS','LESSEQUAL','GREATER','GREATEREQUAL',
 'DEQUAL','DISTINT','SEMICOLON','COMMA','LPAREN','RPAREN','COLON','LBRACKET',
-'RBRACKET','COLONEQUAL','QUOTE','ASLASHASTERISCO','CSLASHASTERISCO','SLASHCOMILLA',
-'SLASHN','SLASHSLASH',
+'RBRACKET','COLONEQUAL',#'QUOTE','ASLASHASTERISCO','CSLASHASTERISCO','SLASHCOMILLA',
+#'SLASHN','SLASHSLASH',
 
 # Others   
 'ID', 
 'INUMBER',
 'FNUMBER',
-'CHARACTER',
+##'CHARACTER',
 'TEXT',
 )
 

@@ -1,24 +1,88 @@
+#!/usr/bin/env python
+# -*- coding: UTF-8 -*-
+#------------------------------------------------------------
+# yacc.py
+#
+# parser
+# ------------------------------------------------------------
+
+import sys
 
 import ply.yacc as yacc
 
 from mpaslex import tokens
 
-def p_program(p):
+#Defino la clase NODE
+class Node:
+	def __init__(self, name, children = None, leaf = None):
+		self.name = name
+		if children == None:
+			children = []
+		self.children = children
+		self.leaf = leaf
+
+	def __str__(self):
+		return "<%s>" % self.name
+
+	def __repr__(self):
+		return "<%s>" % self.name
+
+
+#
+# Funcion para mostrar el AST
+#
+def dump_tree(node, ident = ""):
+	if not hasattr(node, "datatype"):
+		datatype = ""
+	else:
+		datatype = node.datatype
+
+	if not node.leaf:
+		print "%s%s  %s" % (ident, node.name, datatype)
+	else:
+		print "%s%s (%s)  %s" % (ident, node.name, node.leaf, datatype)
+
+	ident = ident.replace("-", " ")
+	ident = ident.replace("+", " ")
+
+	for i in range(len(node.children)):
+		c = node.children[i]
+		if i == len(node.children) - 1:
+			dump_tree(c, ident + "  +-- ")
+		else:
+			dump_tree(c, ident + "  |-- ")
+
+
+#Defino las precedencias
+precedence = (
+    ('left', 'PLUS', 'MINUS'),
+    ('left', 'MULT', 'DIVIDE'),
+    #('right', 'UMINUS'),
+)
+
+def p_program_1(p):
+	'''program : main'''
+	p[0] = Node('program',[p[1]])
+	pass	
+
+def p_program_2(p):
 	'''program : list_functions main'''
 	pass
-
-def p_list_functions(p):
-	'''list_functions : FUN ID LPAREN arguments RPAREN locals BEGIN staments END
-					  | empty'''
+	
+def p_list_functions_1(p):
+	'''list_functions : FUN ID LPAREN arguments RPAREN locals BEGIN staments END'''
 	pass
 
 def p_main(p):
 	"main : FUN MAIN LPAREN arguments RPAREN locals BEGIN staments END"
 	pass
 
-def p_arguments(p):
-	''' arguments : declaration_variables
-                                | empty'''
+def p_arguments_1(p):
+	''' arguments : declaration_variables'''
+	pass
+	
+def p_argument_2(p):
+	''' arguments : empty'''
 	pass
 
 def p_locals(p):
@@ -28,14 +92,14 @@ def p_locals(p):
 	pass
 
 def p_declaration_variables(p):
-	'''declaration_variables : ID COLON tipo
-                          | ID COLON tipo LBRACKET INUMBER RBRACKET
-                          | arguments COMMA ID COLON tipo
-                          | arguments COMMA ID COLON tipo LBRACKET INUMBER RBRACKET
-		'''
+	'''declaration_variables : ID COLON tipo'''
 	pass
 
-
+def p_declaration_variables_2(p):
+	'''declaration_variables : ID COLON tipo LBRACKET INUMBER RBRACKET
+                            | arguments COMMA ID COLON tipo
+                            | arguments COMMA ID COLON tipo LBRACKET INUMBER RBRACKET'''
+	pass
 
 def p_tipo(p):
 	'''tipo : INT
@@ -77,7 +141,7 @@ def p_if(p):
 	pass
 
 def p_if_else(p):
-	'''if_else : IF ralation THEN staments ELSE staments SEMICOLON'''
+	'''if_else : IF relation THEN staments ELSE staments SEMICOLON'''
 	pass
 
 def p_assign(p):
@@ -107,22 +171,22 @@ def p_location_read(p):
 
 def p_expression(p):
 	'''expression : expression PLUS expression
-    	          | expression DIVIDE expression
-        	      | expression MULT expression
-        	      | expression MINUS expression
-        	      | MINUS expression
-        	      | LPAREN expression RPAREN
-        	      | ID LPAREN expression_list RPAREN
-        	      | ID
-        	      | ID LBRACKET expression RBRACKET
-        	      | INUMBER
-        	      | FNUMBER'''
+    	           | expression DIVIDE expression
+        	        | expression MULT expression
+        	        | expression MINUS expression
+        	        | MINUS expression
+        	        | LPAREN expression RPAREN
+        	        | ID LPAREN expression_list RPAREN
+        	        | ID
+        	        | ID LBRACKET expression RBRACKET
+        	        | INUMBER
+        	        | FNUMBER'''
 	pass
 
 def p_expression_list(p):
 	'''expression_list : expression
     	                | expression COMMA expression
-                    	| empty'''
+                    	 | empty'''
 	pass	
 
 
@@ -131,22 +195,29 @@ def p_relation(p):
                 | expression LESS expression
                 | expression GREATEREQUAL expression
                 | expression LESSEQUAL expression
+					 | expression DEQUAL expression
                 | expression DISTINT expression
                 | expression NOT expression
                 | expression OR expression
                 | expression AND expression
                 | NOT expression
                 | LPAREN expression RPAREN
-				| INUMBER'''
+					 | INUMBER'''
 	pass
 
 def p_empty(p):
 	"empty :"
 	pass
 
-def p_error(t):
-	print "Error cuiado"
-	raise ParseError()
+def p_error(p):
+	print "Error cuiado %s" % p.value
 
-yacc.yacc(debug=1)
 
+parser = yacc.yacc(debug=1)
+
+f = open(sys.argv[1])
+res = parser.parse(f.read())
+
+if fil:
+	print "--AST--"
+	dump_tree(res)
