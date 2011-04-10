@@ -20,6 +20,9 @@ class Node:
 			children = []
 		self.children = children
 		self.leaf = leaf
+	
+	def append (self, Node):
+		self.children.append(Node)
 
 	def __str__(self):
 		return "<%s>" % self.name
@@ -54,114 +57,163 @@ def dump_tree(node, ident = ""):
 
 
 #Defino las precedencias
-precedence = (
+precedence =(
     ('left', 'PLUS', 'MINUS'),
     ('left', 'MULT', 'DIVIDE'),
-    #('right', 'UMINUS'),
-)
+	('right', 'UMINUS','NOT','ELSE'),
+    )
 
-def p_program_1(p):
-	'''program : main'''
-	p[0] = Node('program',[p[1]])
-	pass	
-
-def p_program_2(p):
+def p_program(p):
 	'''program : list_functions main'''
-	pass
-	
+	#p[1].append(p[2])
+	p[0] = Node('program',[p[1],p[2]])
+
 def p_list_functions_1(p):
-	'''list_functions : FUN ID LPAREN arguments RPAREN locals BEGIN staments END'''
-	pass
+	'''list_functions : list_functions func'''
+	p[1].append(p[2])
+	p[0] = p[1]
+
+def p_list_functions_2(p):
+	'''list_functions : empty'''
+	p[0] = Node('list_functions',[])
+
+def p_func(p):
+	'''func : FUN ID LPAREN arguments RPAREN locals BEGIN staments END'''
+	a = Node('f_name',[],[p[2]])
+	b = Node('staments',[p[8]])
+	p[0] = Node('func',[a,p[4],p[6],b])
 
 def p_main(p):
 	"main : FUN MAIN LPAREN arguments RPAREN locals BEGIN staments END"
-	pass
+	a = Node('f_name',[],[p[2]])
+	b = Node('staments',[p[8]])
+	#c = Node('locals',[p[6]])
+	p[0] = Node('main',[a,p[4],p[6],b])
 
 def p_arguments_1(p):
 	''' arguments : declaration_variables'''
-	pass
-	
+	p[0] = p[1]
+
 def p_argument_2(p):
-	''' arguments : empty'''
-	pass
+	'''arguments : empty'''
+	p[0] = Node('arguments - []',[])
 
-def p_locals(p):
-	'''locals : declaration_variables SEMICOLON locals
-              | declaration_functions SEMICOLON locals
-              | empty'''
-	pass
+def p_locals_1(p):
+	'''locals : declaration_locals'''
+	#p[1].append(p[2])
+	p[0] = p[1]
+	#p[0] = Node('locals',[p[1]])
 
-def p_declaration_variables(p):
+def p_locals_2(p):
+	'''locals : declaration_functions'''
+	#p[1].append(p[2])
+	p[0] = p[1]
+
+def p_locals_3(p):
+	'''locals : empty'''
+	p[0] = Node('locals - []',[])
+
+def p_declaration_variables_1(p):
 	'''declaration_variables : ID COLON tipo'''
-	pass
+	a = Node('type',[],[p[3]])
+	b = Node('name',[],[p[1]])
+	c = Node('d_var',[a,b])
+	p[0] = Node('arguments',[c])
 
 def p_declaration_variables_2(p):
-	'''declaration_variables : ID COLON tipo LBRACKET INUMBER RBRACKET
-                            | arguments COMMA ID COLON tipo
-                            | arguments COMMA ID COLON tipo LBRACKET INUMBER RBRACKET'''
-	pass
+	'''declaration_variables : ID COLON tipo LBRACKET INUMBER RBRACKET'''
+	a = Node('type',[],[p[3]])
+	b = Node('name',[],[p[1]])
+	c = Node('sub-i',[],[p[5]])
+	d = Node('d_vec',[a,b,c])
+	p[0] = Node('arguments',[d])
+
+def p_declaration_variables_3(p):
+	'''declaration_variables : arguments COMMA ID COLON tipo'''
+	a = Node('type',[],[p[5]])
+	b = Node('name',[],[p[3]])
+	p[1].append(Node('d_var',[a,b]))
+	p[0] = p[1]
+
+def p_declaration_variables_4(p):
+	'''declaration_variables : arguments COMMA ID COLON tipo LBRACKET INUMBER RBRACKET'''
+	a = Node('type',[],[p[5]])
+	b = Node('name',[],[p[3]])
+	c = Node('sub-i',[],[p[7]])
+	p[1].append(Node('d_vec',[a,b,c]))
+	p[0] = p[1]
 
 def p_tipo(p):
 	'''tipo : INT
      		| FLOAT'''
-	pass
+	p[0] = p[1]
 
 def p_declaration_functions(p):
-	'''declaration_functions : FUN ID LPAREN arguments RPAREN locals BEGIN staments END SEMICOLON
-                             | declaration_functions FUN ID LPAREN arguments'''
+	'''declaration_functions : FUN ID LPAREN arguments RPAREN locals BEGIN staments END SEMICOLON'''
+	pass
+
+def p_declaration_locals_1(p):
+	'''declaration_locals : locals ID COLON tipo SEMICOLON'''
+	a = Node('type',[],[p[3]])
+	b = Node('name',[],[p[1]])
+	c = Node('d_var',[a,b])
+	p[0] = Node('locals*',[p[1],c])
+
+def p_declaration_locals_2(p):
+	'''declaration_locals : locals ID COLON tipo LBRACKET INUMBER RBRACKET SEMICOLON'''
 	pass
 
 def p_staments(p):
 	'''staments : stament
-                | stament SEMICOLON stament'''
+                | staments SEMICOLON stament'''
 	pass
 
 def p_stament(p):
 	'''stament : while
                | if
-               | if_else
                | assign
                | print
                | write
                | read
                | return
-               | ID LPAREN expression RPAREN 
+               | ID LPAREN expression_list RPAREN 
                | SKIP SEMICOLON
-               | BREAK SEMICOLON'''
+			   | BEGIN staments END
+               | BREAK'''
 	pass
 
 def p_while(p):
-	'''while : WHILE relation DO staments
-             | WHILE relation BEGIN staments END'''
+	'''while : WHILE relation DO stament'''
 	pass
 
 def p_if(p):
-	'''if : IF relation THEN staments SEMICOLON
-          | IF relation THEN BEGIN staments END SEMICOLON'''
+	'''if : IF relation THEN stament else'''
 	pass
 
-def p_if_else(p):
-	'''if_else : IF relation THEN staments ELSE staments SEMICOLON'''
-	pass
+def p_else(p):
+	'''else : ELSE stament
+			| empty'''
+	pass	
 
 def p_assign(p):
-	'''assign : ID COLONEQUAL expression SEMICOLON'''
+	'''assign : ID COLONEQUAL expression
+			  | ID LBRACKET expression RBRACKET COLONEQUAL expression'''
 	pass
 
 def p_print(p):
-	'''print : PRINT LPAREN TEXT RPAREN SEMICOLON'''
+	'''print : PRINT LPAREN TEXT RPAREN'''
 	pass
 
 def p_write(p):
-	'''write : WRITE LPAREN expression RPAREN SEMICOLON'''
+	'''write : WRITE LPAREN expression RPAREN'''
 	pass
 
 def p_read(p):
-	'''read : READ LPAREN location_read RPAREN SEMICOLON'''
+	'''read : READ LPAREN location_read RPAREN'''
 	pass
 
 def p_return(p):
-	'''return : RETURN expression SEMICOLON'''
+	'''return : RETURN expression'''
 	pass
 
 def p_location_read(p):
@@ -171,10 +223,10 @@ def p_location_read(p):
 
 def p_expression(p):
 	'''expression : expression PLUS expression
-    	           | expression DIVIDE expression
+    	            | expression DIVIDE expression
         	        | expression MULT expression
         	        | expression MINUS expression
-        	        | MINUS expression
+        	        | MINUS expression %prec UMINUS
         	        | LPAREN expression RPAREN
         	        | ID LPAREN expression_list RPAREN
         	        | ID
@@ -185,9 +237,8 @@ def p_expression(p):
 
 def p_expression_list(p):
 	'''expression_list : expression
-    	                | expression COMMA expression
-                    	 | empty'''
-	pass	
+						| expression_list COMMA expression'''
+	pass
 
 
 def p_relation(p):
@@ -195,14 +246,14 @@ def p_relation(p):
                 | expression LESS expression
                 | expression GREATEREQUAL expression
                 | expression LESSEQUAL expression
-					 | expression DEQUAL expression
+				| expression DEQUAL expression
                 | expression DISTINT expression
                 | expression NOT expression
                 | expression OR expression
                 | expression AND expression
                 | NOT expression
                 | LPAREN expression RPAREN
-					 | INUMBER'''
+				| INUMBER'''
 	pass
 
 def p_empty(p):
@@ -210,7 +261,8 @@ def p_empty(p):
 	pass
 
 def p_error(p):
-	print "Error cuiado %s" % p.value
+	print "Error cuiado { %s }" % p.value,
+	print "En %i" % p.lexer.lineno
 
 
 parser = yacc.yacc(debug=1)
@@ -218,6 +270,6 @@ parser = yacc.yacc(debug=1)
 f = open(sys.argv[1])
 res = parser.parse(f.read())
 
-if fil:
+if f:
 	print "--AST--"
 	dump_tree(res)
