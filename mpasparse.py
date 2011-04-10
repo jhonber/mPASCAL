@@ -68,6 +68,9 @@ def p_program(p):
 	#p[1].append(p[2])
 	p[0] = Node('program',[p[1],p[2]])
 
+def p_program_2(p):
+	'''program : '''
+
 def p_list_functions_1(p):
 	'''list_functions : list_functions func'''
 	p[1].append(p[2])
@@ -80,15 +83,15 @@ def p_list_functions_2(p):
 def p_func(p):
 	'''func : FUN ID LPAREN arguments RPAREN locals BEGIN staments END'''
 	a = Node('f_name',[],[p[2]])
-	b = Node('staments',[p[8]])
-	p[0] = Node('func',[a,p[4],p[6],b])
+	#b = Node('staments',[p[8]])
+	p[0] = Node('func',[a,p[4],p[6],p[8]])
 
 def p_main(p):
 	"main : FUN MAIN LPAREN arguments RPAREN locals BEGIN staments END"
 	a = Node('f_name',[],[p[2]])
 	b = Node('staments',[p[8]])
-	#c = Node('locals',[p[6]])
-	p[0] = Node('main',[a,p[4],p[6],b])
+	c = Node('locals',[p[6]])
+	p[0] = Node('main',[a,p[4],c,b])
 
 def p_arguments_1(p):
 	''' arguments : declaration_variables'''
@@ -154,21 +157,29 @@ def p_declaration_functions(p):
 
 def p_declaration_locals_1(p):
 	'''declaration_locals : locals ID COLON tipo SEMICOLON'''
-	a = Node('type',[],[p[3]])
-	b = Node('name',[],[p[1]])
+	a = Node('type',[],[p[4]])
+	b = Node('name',[],[p[2]])
 	c = Node('d_var',[a,b])
-	p[0] = Node('locals*',[p[1],c])
+	p[1].append(c)
+	p[0] = p[1]
+	#p[0] = Node('locals*',[p[1],c])
 
 def p_declaration_locals_2(p):
 	'''declaration_locals : locals ID COLON tipo LBRACKET INUMBER RBRACKET SEMICOLON'''
-	pass
+	a = Node('type',[],[p[2]])
+	b = Node('name',[],[p[4]])
+	c = Node('sub-i',[],[p[6]])
+	p[1].append(Node('d_vec',[a,b,c]))
+	p[0] = p[1]
 
 def p_staments(p):
-	'''staments : stament
-                | staments SEMICOLON stament'''
-	pass
+	'''staments : stament'''
+	p[0] = p[1]
 
-def p_stament(p):
+def p_staments_2(p):
+	'''staments : staments SEMICOLON stament'''
+
+def p_stament_1(p):
 	'''stament : while
                | if
                | assign
@@ -177,10 +188,13 @@ def p_stament(p):
                | read
                | return
                | ID LPAREN expression_list RPAREN 
-               | SKIP SEMICOLON
 			   | BEGIN staments END
                | BREAK'''
 	pass
+
+def p_stament_2(p):
+	'''stament : SKIP'''
+	p[0] = Node('skip',[],[p[1]])
 
 def p_while(p):
 	'''while : WHILE relation DO stament'''
