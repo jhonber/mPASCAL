@@ -68,8 +68,6 @@ def p_program(p):
 	#p[1].append(p[2])
 	p[0] = Node('program',[p[1],p[2]])
 
-def p_program_2(p):
-	'''program : '''
 
 def p_list_functions_1(p):
 	'''list_functions : list_functions func'''
@@ -83,15 +81,15 @@ def p_list_functions_2(p):
 def p_func(p):
 	'''func : FUN ID LPAREN arguments RPAREN locals BEGIN staments END'''
 	a = Node('f_name',[],[p[2]])
-	#b = Node('staments',[p[8]])
-	p[0] = Node('func',[a,p[4],p[6],p[8]])
+	b = Node('staments',[p[8]])
+	p[0] = Node('func',[a,p[4],p[6],b])
 
 def p_main(p):
-	"main : FUN MAIN LPAREN arguments RPAREN locals BEGIN staments END"
-	a = Node('f_name',[],[p[2]])
-	b = Node('staments',[p[8]])
-	c = Node('locals',[p[6]])
-	p[0] = Node('main',[a,p[4],c,b])
+	"main : FUN MAIN LPAREN RPAREN locals BEGIN staments END"
+	a = Node('f_name',[],['main'])
+	#b = Node('locals',[p[5]])
+	c = Node('staments',[p[7]])
+	p[0] = Node('main',[a,p[5],c])
 
 def p_arguments_1(p):
 	''' arguments : declaration_variables'''
@@ -178,86 +176,161 @@ def p_staments(p):
 
 def p_staments_2(p):
 	'''staments : staments SEMICOLON stament'''
+	p[0] = p[1].append(p[3])
 
 def p_stament_1(p):
-	'''stament : while
-               | if
-               | assign
-               | print
-               | write
-               | read
-               | return
-               | ID LPAREN expression_list RPAREN 
-			   | BEGIN staments END
-               | BREAK'''
-	pass
+	'''stament : BEGIN staments END'''
+	p[0] = Node('beg_end',[p[2]])
 
 def p_stament_2(p):
 	'''stament : SKIP'''
 	p[0] = Node('skip',[],[p[1]])
 
+def p_stament_3(p):
+	'''stament : while'''
+	p[0] = p[1]
+
+def p_stament_4(p):
+	'''stament : if'''
+	p[0] = p[1]
+
+def p_stament_5(p):
+	'''stament : assign'''
+	p[0] = p[1]
+
+def p_stament_6(p):
+	'''stament : print'''
+	p[0] = p[1]
+
+def p_stament_7(p):
+	'''stament : write'''
+	p[0] = p[1]
+
+def p_stament_8(p):
+	'''stament : read'''
+	p[0] = p[1]
+
+def p_stament_9(p):
+	'''stament : return'''
+	p[0] = p[1]
+
+def p_stament_10(p):
+	'''stament : ID LPAREN expression_list RPAREN '''
+	a = Node('name',[],[p[1]])
+	p[0] = Node('expr_list',[p[3]])
+
+def p_stament_11(p):
+	'''stament : BREAK'''
+	p[0] = Node('break',[],[p[1]])
+
 def p_while(p):
 	'''while : WHILE relation DO stament'''
-	pass
+	p[0] = Node('while',[p[2],p[4]])
 
 def p_if(p):
 	'''if : IF relation THEN stament else'''
-	pass
+	p[0] = Node('if',[p[2],p[4],p[5]])
 
-def p_else(p):
-	'''else : ELSE stament
-			| empty'''
-	pass	
+def p_else_1(p):
+	'''else : ELSE stament'''
+	p[0] = Node('else',[p[2]])
+def p_else_2(p):
+	'''else : empty'''
+	p[0] = Node('(empty)',[])
 
-def p_assign(p):
-	'''assign : ID COLONEQUAL expression
-			  | ID LBRACKET expression RBRACKET COLONEQUAL expression'''
+def p_assign_1(p):
+	'''assign : ID COLONEQUAL expression'''
+	a = Node('id',[],[p[1]])
+	p[0] = Node('assign',[a,p[3]])
+
+def p_assign_2(p):
+	'''assign : ID LBRACKET expression RBRACKET COLONEQUAL expression'''
 	pass
 
 def p_print(p):
 	'''print : PRINT LPAREN TEXT RPAREN'''
-	pass
+	p[0] = Node('print',[],[p[1],p[3]])
 
 def p_write(p):
 	'''write : WRITE LPAREN expression RPAREN'''
-	pass
+	p[0] = Node('write',[p[3]])
 
 def p_read(p):
 	'''read : READ LPAREN location_read RPAREN'''
-	pass
+	p[0] = Node('read',[p[3]])
 
 def p_return(p):
 	'''return : RETURN expression'''
-	pass
+	p[0] = Node('return',[p[2]])
 
-def p_location_read(p):
-	''' location_read : ID
-                      | ID LBRACKET expression RBRACKET'''
-	pass
+def p_location_read_1(p):
+	''' location_read : ID'''
+	p[0] = Node('id',[],[p[1]])
 
-def p_expression(p):
-	'''expression : expression PLUS expression
-    	            | expression DIVIDE expression
-        	        | expression MULT expression
-        	        | expression MINUS expression
-        	        | MINUS expression %prec UMINUS
-        	        | LPAREN expression RPAREN
-        	        | ID LPAREN expression_list RPAREN
-        	        | ID
-        	        | ID LBRACKET expression RBRACKET
-        	        | INUMBER
-        	        | FNUMBER'''
-	pass
+def p_location_read_2(p):
+	'''location_read : ID LBRACKET expression RBRACKET'''
+	a = Node('id',[],[p[1]])
+	b = Node('expr',[],[p[3]])
+	p[0] = Node('vec',[a,b])
 
-def p_expression_list(p):
-	'''expression_list : expression
-						| expression_list COMMA expression'''
-	pass
+def p_expression_1(p):
+	'''expression : FNUMBER'''
+	p[0] = Node('fnum',[],[p[1]])
 
+def p_expression_2(p):
+	'''expression : ID LBRACKET expression RBRACKET'''
+	a = Node('id',[],[p[1]])
+	b = Node('expr',[],[p[3]])
+	p[0] = Node('vec',[a,b])
+
+def p_expression_3(p):
+	'''expression : ID'''
+	p[0] = Node('id',[],[p[1]])
+
+def p_expression_4(p):
+	'''expression : INUMBER'''
+	p[0] = Node('num',[],[p[1]])
+
+def p_expression_5(p):
+	'''expression : expression PLUS expression'''
+	p[0] = Node('plus',[p[1],p[3]])
+
+def p_expression_6(p):
+	'''expression : expression DIVIDE expression'''
+	p[0] = Node('divide',[p[1],p[3]])
+
+def p_expression_7(p):
+	'''expression : expression MULT expression'''
+	p[0] = Node('mult',[p[1],p[3]])
+
+def p_expression_8(p):
+	'''expression : expression MINUS expression'''
+	p[0] = Node('minus',[p[1],p[3]])
+
+def p_expression_9(p):
+	'''expression : MINUS expression %prec UMINUS'''
+	p[0] = Node('uminus', [p[2]], [p[1]])
+
+def p_expression_10(p):
+	'''expression : LPAREN expression RPAREN'''
+	p[0] = p[2]
+
+def p_expression_11(p):
+	'''expression : ID LPAREN expression_list RPAREN'''
+	a = Node('name',[],[p[1]])
+	p[0] = Node('expr_list',[p[3]])
+
+def p_expression_list_1(p):
+	'''expression_list : expression'''
+	p[0] = p[1]
+
+def p_expression_list_2(p):
+	'''expression_list : expression_list COMMA expression'''
+	p[1].append(p[3])
+	p[0] = p[1]
 
 def p_relation(p):
 	'''relation : expression GREATER expression
-                | expression LESS expression
                 | expression GREATEREQUAL expression
                 | expression LESSEQUAL expression
 				| expression DEQUAL expression
@@ -266,9 +339,13 @@ def p_relation(p):
                 | expression OR expression
                 | expression AND expression
                 | NOT expression
-                | LPAREN expression RPAREN
-				| INUMBER'''
+                | LPAREN expression RPAREN'''
 	pass
+
+def p_relation_2(p):
+	'''relation : expression LESS expression'''
+	a = Node('ope',[],[p[2]])
+	p[0] = Node('relation',[p[1],a,p[3]])
 
 def p_empty(p):
 	"empty :"
