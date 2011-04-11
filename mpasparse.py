@@ -65,7 +65,6 @@ precedence =(
 
 def p_program(p):
 	'''program : list_functions main'''
-	#p[1].append(p[2])
 	p[0] = Node('program',[p[1],p[2]])
 
 
@@ -88,8 +87,8 @@ def p_main(p):
 	"main : FUN MAIN LPAREN RPAREN locals BEGIN staments END"
 	a = Node('f_name',[],['main'])
 	#b = Node('locals',[p[5]])
-	c = Node('staments',[p[7]])
-	p[0] = Node('main',[a,p[5],c])
+	#c = Node('staments',[p[7]])
+	p[0] = Node('main',[a,p[5],p[7]])
 
 def p_arguments_1(p):
 	''' arguments : declaration_variables'''
@@ -151,7 +150,9 @@ def p_tipo(p):
 
 def p_declaration_functions(p):
 	'''declaration_functions : FUN ID LPAREN arguments RPAREN locals BEGIN staments END SEMICOLON'''
-	pass
+	a = Node('f_name',[],[p[2]])
+	p[0] = Node('func',[a,p[4],p[6],p[8]])	
+
 
 def p_declaration_locals_1(p):
 	'''declaration_locals : locals ID COLON tipo SEMICOLON'''
@@ -170,13 +171,15 @@ def p_declaration_locals_2(p):
 	p[1].append(Node('d_vec',[a,b,c]))
 	p[0] = p[1]
 
-def p_staments(p):
+def p_staments_1(p):
 	'''staments : stament'''
-	p[0] = p[1]
+	p[0] = Node('staments',[p[1]])
+
 
 def p_staments_2(p):
 	'''staments : staments SEMICOLON stament'''
-	p[0] = p[1].append(p[3])
+	p[1].append(p[3])
+	p[0] = p[1]
 
 def p_stament_1(p):
 	'''stament : BEGIN staments END'''
@@ -217,7 +220,7 @@ def p_stament_9(p):
 def p_stament_10(p):
 	'''stament : ID LPAREN expression_list RPAREN '''
 	a = Node('name',[],[p[1]])
-	p[0] = Node('expr_list',[p[3]])
+	p[0] = Node('expr_list',[a,p[3]])
 
 def p_stament_11(p):
 	'''stament : BREAK'''
@@ -227,16 +230,17 @@ def p_while(p):
 	'''while : WHILE relation DO stament'''
 	p[0] = Node('while',[p[2],p[4]])
 
-def p_if(p):
+def p_if_(p):
 	'''if : IF relation THEN stament else'''
 	p[0] = Node('if',[p[2],p[4],p[5]])
 
 def p_else_1(p):
 	'''else : ELSE stament'''
 	p[0] = Node('else',[p[2]])
+
 def p_else_2(p):
 	'''else : empty'''
-	p[0] = Node('(empty)',[])
+	p[0] = Node('else []',[])
 
 def p_assign_1(p):
 	'''assign : ID COLONEQUAL expression'''
@@ -245,7 +249,10 @@ def p_assign_1(p):
 
 def p_assign_2(p):
 	'''assign : ID LBRACKET expression RBRACKET COLONEQUAL expression'''
-	pass
+	a = Node('id',[],[p[1]])
+	b = Node('expr',[],[p[3]])
+	c = Node('vec',[a,b])
+	p[0] = Node('assign',[c,p[6]])
 
 def p_print(p):
 	'''print : PRINT LPAREN TEXT RPAREN'''
@@ -329,23 +336,59 @@ def p_expression_list_2(p):
 	p[1].append(p[3])
 	p[0] = p[1]
 
-def p_relation(p):
-	'''relation : expression GREATER expression
-                | expression GREATEREQUAL expression
-                | expression LESSEQUAL expression
-				| expression DEQUAL expression
-                | expression DISTINT expression
-                | expression NOT expression
-                | expression OR expression
-                | expression AND expression
-                | NOT expression
-                | LPAREN expression RPAREN'''
-	pass
+def p_relation_1(p):
+	'''relation :  LPAREN expression RPAREN'''
+	p[0] = p[2]
 
 def p_relation_2(p):
 	'''relation : expression LESS expression'''
 	a = Node('ope',[],[p[2]])
 	p[0] = Node('relation',[p[1],a,p[3]])
+
+def p_relation_3(p):
+	'''relation : expression GREATER expression'''
+	a = Node('ope',[],[p[2]])
+	p[0] = Node('relation',[p[1],a,p[3]])
+
+def p_relation_4(p):
+	'''relation : expression GREATEREQUAL expression'''
+	a = Node('ope',[],[p[2]])
+	p[0] = Node('relation',[p[1],a,p[3]])
+
+def p_relation_5(p):
+	'''relation : expression LESSEQUAL expression'''
+	a = Node('ope',[],[p[2]])
+	p[0] = Node('relation',[p[1],a,p[3]])
+
+def p_relation_6(p):
+	'''relation : expression DEQUAL expression'''
+	a = Node('ope',[],[p[2]])
+	p[0] = Node('relation',[p[1],a,p[3]])
+
+def p_relation_7(p):
+	'''relation : expression DISTINT expression'''
+	a = Node('ope',[],[p[2]])
+	p[0] = Node('relation',[p[1],a,p[3]])
+
+def p_relation_8(p):
+	'''relation : expression NOT expression'''
+	a = Node('ope',[],[p[2]])
+	p[0] = Node('relation',[p[1],a,p[3]])
+
+def p_relation_9(p):
+	'''relation : expression OR expression'''
+	a = Node('ope',[],[p[2]])
+	p[0] = Node('relation',[p[1],a,p[3]])
+
+def p_relation_10(p):
+	'''relation : expression AND expression'''
+	a = Node('ope',[],[p[2]])
+	p[0] = Node('relation',[p[1],a,p[3]])
+
+def p_relation_11(p):
+	'''relation : NOT expression'''
+	a = Node('ope',[],[p[1]])
+	p[0] = Node('relation',[a,p[2]])
 
 def p_empty(p):
 	"empty :"
