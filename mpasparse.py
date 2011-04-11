@@ -12,7 +12,9 @@ import ply.yacc as yacc
 
 from mpaslex import tokens
 
+#
 #Defino la clase NODE
+#
 class Node:
 	def __init__(self, name, children = None, leaf = None):
 		self.name = name
@@ -55,14 +57,18 @@ def dump_tree(node, ident = ""):
 		else:
 			dump_tree(c, ident + "  |-- ")
 
-
+#
 #Defino las precedencias
+#
 precedence =(
     ('left', 'PLUS', 'MINUS'),
     ('left', 'MULT', 'DIVIDE'),
 	('right', 'UMINUS','NOT','ELSE'),
     )
 
+#
+#Definicion de la gramatica y contruccion del AST
+#
 def p_program(p):
 	'''program : list_functions main'''
 	p[0] = Node('program',[p[1],p[2]])
@@ -86,8 +92,6 @@ def p_func(p):
 def p_main(p):
 	"main : FUN MAIN LPAREN RPAREN locals BEGIN staments END"
 	a = Node('f_name',[],['main'])
-	#b = Node('locals',[p[5]])
-	#c = Node('staments',[p[7]])
 	p[0] = Node('main',[a,p[5],p[7]])
 
 def p_arguments_1(p):
@@ -100,13 +104,11 @@ def p_argument_2(p):
 
 def p_locals_1(p):
 	'''locals : declaration_locals'''
-	#p[1].append(p[2])
 	p[0] = p[1]
-	#p[0] = Node('locals',[p[1]])
 
 def p_locals_2(p):
-	'''locals : declaration_functions'''
-	#p[1].append(p[2])
+	'''locals : locals declaration_functions'''
+	p[1].append(p[2])
 	p[0] = p[1]
 
 def p_locals_3(p):
@@ -151,7 +153,7 @@ def p_tipo(p):
 def p_declaration_functions(p):
 	'''declaration_functions : FUN ID LPAREN arguments RPAREN locals BEGIN staments END SEMICOLON'''
 	a = Node('f_name',[],[p[2]])
-	p[0] = Node('func',[a,p[4],p[6],p[8]])	
+	p[0] = Node('fun_local',[a,p[4],p[6],p[8]])	
 
 
 def p_declaration_locals_1(p):
@@ -161,7 +163,6 @@ def p_declaration_locals_1(p):
 	c = Node('d_var',[a,b])
 	p[1].append(c)
 	p[0] = p[1]
-	#p[0] = Node('locals*',[p[1],c])
 
 def p_declaration_locals_2(p):
 	'''declaration_locals : locals ID COLON tipo LBRACKET INUMBER RBRACKET SEMICOLON'''
@@ -395,15 +396,24 @@ def p_empty(p):
 	pass
 
 def p_error(p):
-	print "Error cuiado { %s }" % p.value,
-	print "En %i" % p.lexer.lineno
-
+	print "Error de sintaxis en o cerca de -> '%s'" % p.value,
+	print "linea: %i " % p.lineno
 
 parser = yacc.yacc(debug=1)
 
-f = open(sys.argv[1])
-res = parser.parse(f.read())
+#
+#Leo el archivo de entrada
+#
 
-if f:
-	print "--AST--"
-	dump_tree(res)
+try:
+	f = open(sys.argv[1])
+	res = parser.parse(f.read())
+
+	if f: #Muestro el AST
+		print "\n[    -----AST-----    ]"
+		dump_tree(res)
+		print "[____-----End-----____]"
+
+except IOError:
+		print "Error al leer el archivo!"
+
