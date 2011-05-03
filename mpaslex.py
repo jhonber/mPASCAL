@@ -24,8 +24,7 @@ tokens = reserved + (
 # Symbols
 'PLUS','MINUS','DIVIDE','MULT','LESS','LESSEQUAL','GREATER','GREATEREQUAL',
 'DEQUAL','DISTINT','SEMICOLON','COMMA','LPAREN','RPAREN','COLON','LBRACKET',
-'RBRACKET','COLONEQUAL',#'QUOTE','ASLASHASTERISCO','CSLASHASTERISCO','SLASHCOMILLA',
-#'SLASHN','SLASHSLASH',
+'RBRACKET','COLONEQUAL',
 
 # Others   
 'ID', 
@@ -54,12 +53,6 @@ t_RPAREN = r'\)'
 t_COLON = r':'
 t_LBRACKET = r'\['
 t_RBRACKET = r'\]'
-#t_QUOTE = r'\"'
-#t_ASLASHASTERISCO = r'\/*'
-#t_CSLASHASTERISCO = r'\*/'
-#t_SLASHCOMILLA = r'\\"'
-#t_SLASHN = r''
-#t_SLASHSLASH = r'\//'
 
 def t_malformed_id(t):
 	r'((\\)|(\d+))[A-Za-z]'
@@ -70,9 +63,9 @@ def t_ID(t):
     t.type = reserved_map.get(t.value.upper(),'ID')    # Check for reserved words
     return t
 
-def t_malformed_fnumber(t):
-    r'((0\d+)((\.\d+(e[+-]?\d+)?)|(e[+-]?\d+))) | (\d*(\.\d*(\.)\w*)) | ((\d+)(\.\d*(e[+-]?(?!\d))?)) '
-    print "Linea %d. Malformado numero float '%s'" % (t.lineno, t.value)
+#def t_malformed_fnumber(t):
+#    r'((0\d+)((\.\d+(e[+-]?\d+)?)|(e[+-]?\d+))) | (\d*(\.\d*(\.)\w*)) | ((\d+)(\.\d*(e[+-]?(?!\d))?)) '
+#    print "Linea %d. Malformado numero float '%s'" % (t.lineno, t.value)
 
 def t_FNUMBER(t):
     r'((0(?!\d))|([1-9]\d*))((\.\d+(e[+-]?\d+)?)|(e[+-]?\d+))'
@@ -107,7 +100,7 @@ def t_CHARACTER(t):
 # Para contar el numero de lineas 
 def t_newline(t):
     r'\n+'
-    t.lexer.lineno += len(t.value)
+    t.lexer.lineno += len(t.value)-1
 
 # Ignored tokens
 t_ignore = ' \t'
@@ -127,7 +120,7 @@ def t_error(t):
     if t.value[0] == '"':
         print "Indeterminado string."
         if t.value.count('\n') > 0:
-            t.skip(t.value.index('\n'))
+            t.lexer.skip(t.value.index('\n'))
     elif t.value[0:2] == '/*':
         print "Comentario indeterminado. '%s'" % (t.value[0:2])
     else:
