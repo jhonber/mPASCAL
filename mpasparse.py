@@ -74,7 +74,7 @@ precedence =(
 #
 def p_program_1(p):
 	'''program : function'''
-	#p[0] = Node('program',[#p[1],p[2]])
+	p[0] = Node('program',[p[1]])
 
 def p_program_2(p):
 	'''program : program function'''
@@ -82,28 +82,28 @@ def p_program_2(p):
 
 def p_function(p):
 	'''function : FUN ID arguments locals BEGIN staments END'''
-	##p[1].append(p[2])
-	#p[0] = #p[1]
+	p[0] = Node('func', [p[3],p[4],p[6]],[p[2]])
 
 def p_arguments_1(p):
-	''' arguments : LPAREN RPAREN '''
-	#p[0] = #p[1]
+	'''arguments : LPAREN RPAREN'''
+	p[0] = Node('arguments ()',[])
 
 def p_argument_2(p):
 	'''arguments : LPAREN declaration_variables RPAREN'''
-	#p[0] = Node('arguments - []',[])
+	p[0] = Node('arguments',[p[2]])
 
 def p_declaration_variables_1(p):
 	'''declaration_variables : param'''
-	#p[0] = Node('arguments - []',[])
+	p[0] = p[1]
 
 def p_declaration_variables_2(p):
 	'''declaration_variables : declaration_variables COMMA param'''
-	#p[0] = Node('arguments - []',[])
+	p[1].append(p[3])
+	p[0] = p[1]
 
 def p_param_1(p):
 	'''param : ID COLON type'''
-	#p[0] = #p[1]
+	p[0] = Node('',[],[p[1],p[3]])
 
 def p_param_2(p):
 	'''param : ID COLON ID'''
@@ -111,19 +111,24 @@ def p_param_2(p):
 
 def p_locals_1(p):
 	'''locals : dec_list SEMICOLON'''
-	#p[0] = #p[1]
+	p[0] = Node('locals',[p[1]])
 
 def p_locals_2(p):
 	'''locals : empty'''
-	#p[0] = Node('locals - []',[])
+	p[0] = Node('locals ()',[])
 
-def p_dec_list(p):
-	'''dec_list : var_dec
-				| dec_list SEMICOLON var_dec'''
+def p_dec_list_1(p):
+	'''dec_list : var_dec'''
+	p[0] = p[1]
+
+def p_dec_list_2(p):
+	'''dec_list : dec_list SEMICOLON var_dec'''
+	p[1].append(p[3])
+	p[0] = p[1]
 
 def p_var_dec_1(p):
 	'''var_dec : param'''
-	#p[0] = Node('locals - []',[])
+	p[0] = p[1]
 
 def p_var_dec_2(p):
 	'''var_dec : function'''
@@ -131,7 +136,7 @@ def p_var_dec_2(p):
 
 def p_type_1(p):
 	'''type : INT'''
-	#p[0] = Node('locals - []',[])
+	p[0] = p[1]
 
 def p_type_2(p):
 	'''type : FLOAT'''
@@ -147,12 +152,13 @@ def p_type_4(p):
 
 def p_staments_1(p):
 	'''staments : stament'''
-	#p[0] = Node('staments',[#p[1]])
+	p[0] = Node('staments',[p[1]])
+	#p[0] = p[1]
 
 def p_staments_2(p):
 	'''staments : staments SEMICOLON stament'''
-	##p[1].append(p[3])
-	#p[0] = #p[1]
+	#p[1].append(p[3])
+	#p[0] = p[1]
 
 def p_stament_1(p):
 	'''stament : WHILE relation DO stament'''
@@ -168,7 +174,7 @@ def p_stament_3(p):
 
 def p_stament_4(p):
 	'''stament : PRINT LPAREN TEXT RPAREN'''
-	#p[0] = #p[1]
+	p[0] = Node('print',[],[p[3]])
 
 def p_stament_5(p):
 	'''stament : WRITE LPAREN expression RPAREN'''
@@ -344,7 +350,12 @@ def p_empty(p):
 	"empty :"
 	pass
 
+#Para contar los errores
+Error=0
+
 def p_error(p):
+	global Error
+	Error +=1
 	print "Error de sintaxis en o cerca de -> '%s'" % p.value,
 	print "linea: %i " % p.lineno
 
@@ -359,9 +370,10 @@ try:
 	res = parser.parse(f.read())
 
 	if f: #Muestro el AST
-		print "\n[    -----AST-----    ]"
-		#dump_tree(res)
-		print "[____-----End-----____]"
+		if Error==0:
+			print "\n[    -----AST-----    ]"
+			dump_tree(res)
+			print "[____-----End-----____]"
 
 except IOError:
 		print "Error al leer el archivo!"
