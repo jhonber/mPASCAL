@@ -1,5 +1,5 @@
 /* Comentario */
-fun quicksort(l:int, r:int, l:int, r:int/*, a:int[8192]*/)
+fun quicksort(l:float, r:int, l:int, r:int, a:int[8192])
     i:int;
     j:int;
     x:int;
@@ -9,7 +9,7 @@ fun quicksort(l:int, r:int, l:int, r:int/*, a:int[8192]*/)
 begin
     i := l;
     j := r;
-	d := b[0];
+	d := b[int(i+1)+1];
     x := a[(l+r)/2];
     done := 0;
     while done == 0 do
@@ -35,9 +35,8 @@ begin
         tmp := quicksort(i, r, a)
 end
 
-/*i:int,a:int,b:int,a:int,b:int*/
-/*
-fun main(i:int,a:int,b:int,a:int,b:int)
+
+fun main()
 i:v;
 v:int;
 i:int;
@@ -48,4 +47,4 @@ begin
    print("Entre n: ");
    print("otro")
 end
-*/
+

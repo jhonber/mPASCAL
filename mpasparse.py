@@ -78,7 +78,8 @@ def p_program_1(p):
 
 def p_program_2(p):
 	'''program : program function'''
-	#p[0] = Node('program',[#p[1],p[2]])
+	p[1].append(p[2])
+	p[0] = p[1]
 
 def p_function(p):
 	'''function : FUN ID arguments locals BEGIN staments END'''
@@ -90,28 +91,36 @@ def p_arguments_1(p):
 
 def p_argument_2(p):
 	'''arguments : LPAREN declaration_variables RPAREN'''
-	p[0] = Node('arguments',[p[2]])
+	p[0] = p[2]
 
 def p_declaration_variables_1(p):
 	'''declaration_variables : param'''
-	p[0] = p[1]
+	p[0] = Node('arguments',[p[1]])
 
 def p_declaration_variables_2(p):
 	'''declaration_variables : declaration_variables COMMA param'''
 	p[1].append(p[3])
 	p[0] = p[1]
 
-def p_param_1(p):
-	'''param : ID COLON type'''
-	p[0] = Node('',[p[3]],[p[1]])
-
 def p_param_2(p):
 	'''param : ID COLON ID'''
 	p[0] = Node('',[],[p[1],p[3]])
 
+def p_param_3(p):
+	'''param : ID COLON INT'''
+	p[0] = Node('',[],[p[1],p[3]])
+
+def p_param_4(p):
+	'''param : ID COLON FLOAT'''
+	p[0] = Node('',[],[p[1],p[3]])
+
+def p_param_5(p):
+	'''param : ID COLON type'''
+	p[0] = Node('',[p[3]],[p[1]])
+
 def p_locals_1(p):
 	'''locals : dec_list SEMICOLON'''
-	p[0] = Node('locals',[p[1]])
+	p[0] = p[1]
 
 def p_locals_2(p):
 	'''locals : empty'''
@@ -119,7 +128,7 @@ def p_locals_2(p):
 
 def p_dec_list_1(p):
 	'''dec_list : var_dec'''
-	p[0] = p[1]
+	p[0] = Node('locals',[p[1]])
 
 def p_dec_list_2(p):
 	'''dec_list : dec_list SEMICOLON var_dec'''
@@ -134,21 +143,13 @@ def p_var_dec_2(p):
 	'''var_dec : function'''
 	p[0] = p[1]
 
-def p_type_1(p):
-	'''type : INT'''
-	p[0] = Node('',[],[p[1]])
-
-def p_type_2(p):
-	'''type : FLOAT'''
-	p[0] = p[1]
-
 def p_type_3(p):
 	'''type : INT LBRACKET expression RBRACKET'''
 	p[0] = Node('type',[p[3]],[p[1]])
 
 def p_type_4(p):
 	'''type : FLOAT LBRACKET expression RBRACKET'''
-	#p[0] = Node('locals - []',[])
+	p[0] = Node('type',[p[3]],[p[1]])
 
 def p_staments_1(p):
 	'''staments : stament'''
@@ -210,7 +211,7 @@ def p_else_1(p):
 
 def p_else_2(p):
 	'''else : empty'''
-	p[0] = Node('',[])
+	p[0] = Node('else ()')
 	
 def p_location_read_1(p):
 	'''location_read : ID'''
@@ -242,7 +243,7 @@ def p_expression_5(p):
 
 def p_expression_6(p):
 	'''expression : LPAREN expression RPAREN'''
-	p[0] = Node('',[p[2]])
+	p[0] = p[2]
 
 def p_expression_7(p):
 	'''expression : ID LPAREN expression_list RPAREN'''
@@ -351,7 +352,6 @@ parser = yacc.yacc(debug=1)
 try:
 	f = open(sys.argv[1])
 	res = parser.parse(f.read())
-
 	if f: #Muestro el AST
 		if Error==0:
 			print "\n[    -----AST-----    ]"
