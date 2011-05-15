@@ -7,21 +7,23 @@
 # ------------------------------------------------------------
 
 import sys
-
 import ply.yacc as yacc
-
 from mpaslex import tokens
+import symtab
+import mpastype
 
 #
 #Defino la clase NODE
 #
 class Node:
-	def __init__(self, name, children = None, leaf = None):
+	def __init__(self, name, children = None, leaf = None, type = None, value=None):
 		self.name = name
 		if children == None:
 			children = []
 		self.children = children
 		self.leaf = leaf
+		self.type = type
+		self.value = value
 	
 	def append (self, Node):
 		self.children.append(Node)
