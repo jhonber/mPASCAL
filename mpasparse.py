@@ -75,18 +75,14 @@ precedence =(
 
 def p_program(p):
 	'''program : funclist'''
-#	t[0].value = t[1].value
 	p[0] = p[1]
 
 def p_funclist_1(p):
 	'''funclist : function'''
-#	t[0].value = Node('program', [t[1].value])
 	p[0] = Node('program',[p[1]])
 
 def p_funclist_2(p):
 	'''funclist : funclist function'''
-#	t[0].value = t[1].value
-#	t[0].value.append(t[2].value)
 	p[1].append(p[2])
 	p[0] = p[1]
 
@@ -95,24 +91,31 @@ currentf  = None # Funcion actual
 
 def p_function(p):
 	'''function : fun arguments locals BEGIN staments END'''
-	#print "$$$$$$$$$$"
-	print dir(p[2])
-	p[0] = Node('func', [p[2],p[3],p[5]],p[1])
-
-	# Hago por a la pila
+	p[0] = Node('func', [p[1],p[2],p[3],p[5]])
+	#print "sSSSSS"
+	#print "current: ",currentf
+	##print "funcstack: ",funcstack
+	#print "sSSSSS"
+	# Hago pop a la pila
+	### symtab.banf(p[2].name,p[2].typ)
 	symtab.pop_scope()
 	
 
 def p_fun_scope(p):
 	'''fun : FUN ID'''
 	p[0] = p[2]
-	
 	# Miro si el nombre de la funcion ya esta en current
 	re=symtab.redeclaration(p[2])
 	if re:
 		print "#Error# redeclaracion de funcion '%s' en linea %i" % (re.name,re.lineno)
-	else: #Sino esta redefinido lo aggrega a la 
+	else: #Sino esta redefinido lo agrega a la tabla
 		symtab.baf(p[2])
+	
+	funcstack.append(p[2])
+	try:
+		currentf = funcstack[-1]
+	except IndexError:
+		currentf = None
 	
 	#Creo un nuevo scope
 	symtab.new_scope()
@@ -122,14 +125,21 @@ def p_arguments_1(p):
 	'''arguments : LPAREN RPAREN'''
 	p[0] = Node('arguments ()',[])
 	p[0].arg = 0
+	funcstack.insert(len(funcstack),0)
 
 def p_argument_2(p):
 	'''arguments : LPAREN declaration_variables RPAREN'''
 	p[0] = p[2]
+	p[0].arg=len(p[2].children)
+	funcstack.insert(len(funcstack),p[0].arg)
+
+	# Para ponerle los artributos a las funciones el numero de argumentos
+	symtab.baf(funcstack[-1],p[2].arg)
 
 def p_declaration_variables_1(p):
 	'''declaration_variables : param'''
 	p[0] = Node('arguments',[p[1]])
+	
 
 def p_declaration_variables_2(p):
 	'''declaration_variables : declaration_variables COMMA param'''
@@ -143,12 +153,25 @@ def p_param_2(p):
 def p_param_3(p):
 	'''param : ID COLON INT'''
 	p[0] = Node('',[],[p[1],p[3]])
-	p[0].type=p[3]
+	p[0].clase = "ident"
+	p[0].typ = p[3]
+	p[0].name = p[1]
+
+	a=symtab.banf(p[0].name,p[0].typ)
+	if a :
+		print "#Error# redeclaracion de identificador '%s' en linea %i" % (p[0].name,a.lineno)
 
 def p_param_4(p):
 	'''param : ID COLON FLOAT'''
 	p[0] = Node('',[],[p[1],p[3]])
-	p[0].type=p[3]
+	p[0] = Node('',[],[p[1],p[3]])
+	p[0].clase = "ident"
+	p[0].typ = p[3]
+	p[0].name = p[1]
+
+	a=symtab.banf(p[0].name,p[0].typ)
+	if a :
+		print "#Error# redeclaracion de identificador '%s' en linea %i" % (p[0].name,a.lineno)
 
 def p_param_5(p):
 	'''param : ID COLON type'''
@@ -158,6 +181,7 @@ def p_param_5(p):
 def p_locals_1(p):
 	'''locals : dec_list SEMICOLON'''
 	p[0] = p[1]
+	symtab.banf(p[1].name,p[1].typ)
 
 def p_locals_2(p):
 	'''locals : empty'''
@@ -166,6 +190,9 @@ def p_locals_2(p):
 def p_dec_list_1(p):
 	'''dec_list : var_dec'''
 	p[0] = Node('locals',[p[1]])
+	p[0].name = p[1].name
+	p[0].clase = "ident"
+	p[0].typ = p[1].typ
 
 def p_dec_list_2(p):
 	'''dec_list : dec_list SEMICOLON var_dec'''
@@ -212,8 +239,10 @@ def p_stament_3(p):
 	'''stament : location_read COLONEQUAL expression''' #assing
 	p[0] = Node('assign',[p[1],p[3]])
 	lr=symtab.findS(p[1])
+	print "<<<<<ID>>>>>: ",p[1]
+	print "---- %s ----", lr
 	if lr:
-		print "#Error# variable no declarada '%s' en la linea %i " % (p[1].id,lr.lineno)
+		print "#Error# variable no declarada '%s' en la linea %i " % (p[1],lr.lineno)
 
 def p_stament_4(p):
 	'''stament : PRINT LPAREN TEXT RPAREN'''
@@ -234,14 +263,24 @@ def p_stament_7(p):
 def p_stament_8(p):
 	'''stament : ID LPAREN expression_list RPAREN''' #call
 	f=symtab.findS(p[1])
+	print "\ndir(f) %s\n\n" % dir(f)
 	if f:
 		print "#Error# Función no declarada '%s' en la linea %i " % (p[1],f.lineno)
-	print "!!!!!"
-	print "hijos",len(p[3].leaf)
-	print len(p[3].children)+1
-	print "!!!!!"
-	p[0] = Node('',[p[3]],p[1])	
-	p[0].arg = len(p[3].children)+1
+
+	if hasattr(p[3],'arg'):
+		p[0] = Node('',[p[3]],p[1])
+		p[0].arg = 0
+	else:
+		p[0] = Node('',[p[3]],p[1])
+		p[0].arg = len(p[3].children)+1
+	
+	ind=0
+	for i in range(0,len(funcstack)):
+		if p[1] == funcstack[i]:
+			ind=i+1
+
+	if not f and funcstack[ind] != p[0].arg:
+		print "#Error# Numero de argumentos erroneo en '%s' en la linea %i" % (p[1],f.lineno)
 
 def p_stament_9(p):
 	'''stament : SKIP'''
@@ -265,8 +304,9 @@ def p_else_2(p):
 	
 def p_location_read_1(p):
 	'''location_read : ID'''
-	p[0] = Node('',[],p[1])
-	p[0].id=p[1]
+	#p[0] = Node('',[],p[1])
+	#p[0].id=p[1]
+	p[0] = p[1]
 
 def p_location_read_2(p):
 	'''location_read : ID LBRACKET expression RBRACKET'''
@@ -337,6 +377,8 @@ def p_expression_list_2(p):
 def p_expression_list_3(p):
 	'''expression_list : empty'''
 	p[0] = Node('expr_list',[])
+	print "entre!!"
+	p[0].arg = 0
 
 def p_relation_1(p):
 	'''relation : expression GREATER expression'''
