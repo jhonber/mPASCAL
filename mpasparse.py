@@ -16,14 +16,12 @@ import mpastype
 #Defino la clase NODE
 #
 class Node:
-	def __init__(self, name, children = None, leaf = None, type = None, value=None):
+	def __init__(self, name, children = None, leaf = None):
 		self.name = name
 		if children == None:
 			children = []
 		self.children = children
 		self.leaf = leaf
-		self.type = type
-		self.value = value
 	
 	def append (self, Node):
 		self.children.append(Node)
@@ -74,22 +72,56 @@ precedence =(
 #
 #Definicion de la gramatica y contruccion del AST
 #
-def p_program_1(p):
-	'''program : function'''
+
+def p_program(p):
+	'''program : funclist'''
+#	t[0].value = t[1].value
+	p[0] = p[1]
+
+def p_funclist_1(p):
+	'''funclist : function'''
+#	t[0].value = Node('program', [t[1].value])
 	p[0] = Node('program',[p[1]])
 
-def p_program_2(p):
-	'''program : program function'''
+def p_funclist_2(p):
+	'''funclist : funclist function'''
+#	t[0].value = t[1].value
+#	t[0].value.append(t[2].value)
 	p[1].append(p[2])
 	p[0] = p[1]
 
+funcstack = [ ] # Pila de funciones
+currentf  = None # Funcion actual
+
 def p_function(p):
-	'''function : FUN ID arguments locals BEGIN staments END'''
-	p[0] = Node('func', [p[3],p[4],p[6]],p[2])
+	'''function : fun arguments locals BEGIN staments END'''
+	#print "$$$$$$$$$$"
+	print dir(p[2])
+	p[0] = Node('func', [p[2],p[3],p[5]],p[1])
+
+	# Hago por a la pila
+	symtab.pop_scope()
+	
+
+def p_fun_scope(p):
+	'''fun : FUN ID'''
+	p[0] = p[2]
+	
+	# Miro si el nombre de la funcion ya esta en current
+	re=symtab.redeclaration(p[2])
+	if re:
+		print "#Error# redeclaracion de funcion '%s' en linea %i" % (re.name,re.lineno)
+	else: #Sino esta redefinido lo aggrega a la 
+		symtab.baf(p[2])
+	
+	#Creo un nuevo scope
+	symtab.new_scope()
+
 
 def p_arguments_1(p):
 	'''arguments : LPAREN RPAREN'''
 	p[0] = Node('arguments ()',[])
+	p[0].arg = 0
 
 def p_argument_2(p):
 	'''arguments : LPAREN declaration_variables RPAREN'''
@@ -111,14 +143,17 @@ def p_param_2(p):
 def p_param_3(p):
 	'''param : ID COLON INT'''
 	p[0] = Node('',[],[p[1],p[3]])
+	p[0].type=p[3]
 
 def p_param_4(p):
 	'''param : ID COLON FLOAT'''
 	p[0] = Node('',[],[p[1],p[3]])
+	p[0].type=p[3]
 
 def p_param_5(p):
 	'''param : ID COLON type'''
 	p[0] = Node('',[p[3]],p[1])
+	p[0].type=p[3]
 
 def p_locals_1(p):
 	'''locals : dec_list SEMICOLON'''
@@ -148,10 +183,12 @@ def p_var_dec_2(p):
 def p_type_3(p):
 	'''type : INT LBRACKET expression RBRACKET'''
 	p[0] = Node('type',[p[3]],p[1])
+	p[0].type=p[1]
 
 def p_type_4(p):
 	'''type : FLOAT LBRACKET expression RBRACKET'''
 	p[0] = Node('type',[p[3]],p[1])
+	[0].type=p[1]
 
 def p_staments_1(p):
 	'''staments : stament'''
@@ -174,6 +211,9 @@ def p_stament_2(p):
 def p_stament_3(p):
 	'''stament : location_read COLONEQUAL expression''' #assing
 	p[0] = Node('assign',[p[1],p[3]])
+	lr=symtab.findS(p[1])
+	if lr:
+		print "#Error# variable no declarada '%s' en la linea %i " % (p[1].id,lr.lineno)
 
 def p_stament_4(p):
 	'''stament : PRINT LPAREN TEXT RPAREN'''
@@ -192,8 +232,16 @@ def p_stament_7(p):
 	p[0] = Node('',[p[2]],p[1])
 
 def p_stament_8(p):
-	'''stament : ID LPAREN expression_list RPAREN'''
-	p[0] = Node('',[p[3]],p[1])
+	'''stament : ID LPAREN expression_list RPAREN''' #call
+	f=symtab.findS(p[1])
+	if f:
+		print "#Error# Función no declarada '%s' en la linea %i " % (p[1],f.lineno)
+	print "!!!!!"
+	print "hijos",len(p[3].leaf)
+	print len(p[3].children)+1
+	print "!!!!!"
+	p[0] = Node('',[p[3]],p[1])	
+	p[0].arg = len(p[3].children)+1
 
 def p_stament_9(p):
 	'''stament : SKIP'''
@@ -218,10 +266,12 @@ def p_else_2(p):
 def p_location_read_1(p):
 	'''location_read : ID'''
 	p[0] = Node('',[],p[1])
+	p[0].id=p[1]
 
 def p_location_read_2(p):
 	'''location_read : ID LBRACKET expression RBRACKET'''
 	p[0] = Node('',[p[3]],p[1])
+	p[0].id=p[1]
 
 def p_expression_1(p):
 	'''expression : expression PLUS expression'''
@@ -342,7 +392,7 @@ Error=0
 def p_error(p):
 	global Error
 	Error +=1
-	print "Error de sintaxis en o cerca de -> '%s'" % p.value,
+	print "#Error# de sintaxis en o cerca de -> '%s'" % p.value,
 	print "linea: %i " % p.lineno
 
 parser = yacc.yacc(debug=1)
@@ -357,8 +407,9 @@ try:
 	if f: #Muestro el AST
 		if Error==0:
 			print "\n[    -----AST-----    ]"
-			dump_tree(res)
+			#dump_tree(res)
 			print "[____-----End-----____]"
+			pass
 
 except IOError:
 		print "Error al leer el archivo!"

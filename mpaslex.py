@@ -7,6 +7,7 @@
 # ------------------------------------------------------------
 import re
 import ply.lex as lex
+import symtab
 
 reserved = (
 # Reserverd words 
@@ -60,9 +61,13 @@ def t_malformed_id(t):
 	print "Linea %d: Identificador no válido '%s'" % (t.lineno,t.value)
 
 def t_ID(t):
-    r'[A-Za-z_][\w]*'
-    t.type = reserved_map.get(t.value.upper(),'ID')    # Check for reserved words
-    return t
+	r'[A-Za-z_][\w]*'
+	## problens len 1
+	t.type = reserved_map.get(t.value.upper(),'ID')
+	if t.type == 'ID':
+		symtab.attach_symbol(t)
+	return t
+
 
 #def t_malformed_fnumber(t):
 #    r'((0\d+)((\.\d+(e[+-]?\d+)?)|(e[+-]?\d+))) | (\d*(\.\d*(\.)\w*)) | ((\d+)(\.\d*(e[+-]?(?!\d))?)) '
@@ -149,6 +154,7 @@ def run_lexer():
         print "(%s,'%s',%d)" % (token.type, token.value, token.lineno-1)
 
 lex.lex()
+symtab.new_scope()
 
 if __name__ == '__main__':
     run_lexer()
