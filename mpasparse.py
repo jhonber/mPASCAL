@@ -92,6 +92,7 @@ currentf  = None # Funcion actual
 def p_function(p):
 	'''function : fun arguments locals BEGIN staments END'''
 	p[0] = Node('func', [p[1],p[2],p[3],p[5]])
+	p[0].typ="int"
 	#print "sSSSSS"
 	#print "current: ",currentf
 	##print "funcstack: ",funcstack
@@ -216,8 +217,6 @@ def p_type_3(p):
 	'''type : INT LBRACKET expression RBRACKET'''
 	p[0] = Node('type',[p[3]],p[1])
 	p[0].typ="int["+str(p[3].value)+"]"
-	#print "\n/////// %s\n" % dir(p[0])
-	#print "*type: %s\n" % p[0].typ
 
 def p_type_4(p):
 	'''type : FLOAT LBRACKET expression RBRACKET'''
@@ -270,8 +269,11 @@ def p_stament_7(p):
 def p_stament_8(p):
 	'''stament : ID LPAREN expression_list RPAREN''' #call
 	f=symtab.findS(p[1])
+	#print "\n### %s \n" % dir(f)
 	if f:
-		print "#Error# Función no declarada '%s' en la linea" % (p[1])
+		print "#Error# Función no declarada '%s' " % (p[1]),
+		if hasattr(f,'lineno'):
+			print "en la linea",f.lineno
 
 	if hasattr(p[3],'arg'):
 		p[0] = Node('',[p[3]],p[1])
@@ -396,7 +398,6 @@ def p_expression_list_2(p):
 def p_expression_list_3(p):
 	'''expression_list : empty'''
 	p[0] = Node('expr_list',[])
-	print "entre!!"
 	p[0].arg = 0
 
 def p_relation_1(p):
