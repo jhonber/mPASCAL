@@ -56,10 +56,6 @@ t_COLON = r':'
 t_LBRACKET = r'\['
 t_RBRACKET = r'\]'
 
-def t_malformed_id(t):
-	r'((\\)|(\d+))[A-Za-z]'
-	print "Linea %d: Identificador no válido '%s'" % (t.lineno,t.value)
-
 def t_ID(t):
 	r'[A-Za-z_][\w]*'
 	## problens len 1
@@ -74,13 +70,16 @@ def t_ID(t):
 #    print "Linea %d. Malformado numero float '%s'" % (t.lineno, t.value)
 
 def t_FNUMBER(t):
-    r'((0(?!\d))|([1-9]\d*))((\.\d+(e[+-]?\d+)?)|(e[+-]?\d+))'
+    r'([1-9]\d*|0)(\.\d+(e(\+|-)?\d+)?|e[\+|-]?\d+)'
     return t
 
-
 def t_malformed_inumber(t):
-    r'0\d+'
-    print "Linea %d. Entero mal formado '%s'" % (t.lineno, t.value)
+    r'0\d+(\.\d+(e(\+|-)?\d+)?|e[\+|-]?\d+)?'
+    print "Linea %d. Numero mal formado '%s'" % (t.lineno, t.value)
+
+def t_malformed_id(t):
+	r'((\\)|(\d+))[A-Za-z]'
+	print "Linea %d: Identificador no válido '%s'" % (t.lineno,t.value)
 
 def t_INUMBER(t):
     r'0(?!\d)|([1-9]\d*)'

@@ -102,7 +102,7 @@ def rdeclaration(name):
 # Temporal
 def arguments(name,arg):
 	for s in current:
-		print "==>", dir(s)
+		##print "==>", dir(s)
 		if s.name==name:
 			pass
 	return False
@@ -110,14 +110,14 @@ def arguments(name,arg):
 
 # Busca identificador en la tabla de simbolos
 def findS(name):
-	print ":::::___findS__::::"
-	print "scopes: ",scopes
+	##print ":::::___findS__::::"
+	##print "scopes: ",scopes
 	for n in range(len(scopes)-1,-1,-1):
 		for s in scopes[n]:
-			print "scopes[%i]: %s" % (n,scopes[n])
-			print "s: ",s
-			print "dir(s) ", dir(s)
-			print ":::::__EndFindS___::::"
+			##print "scopes[%i]: %s" % (n,scopes[n])
+			##print "s: ",s
+			##print "dir(s) ", dir(s)
+			##print ":::::__EndFindS___::::"
 			if s.name==name and (hasattr(s,'typ') or hasattr(s,'clase')):
 				return None
 	return last[-1]

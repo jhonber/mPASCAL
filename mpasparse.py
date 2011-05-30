@@ -103,7 +103,7 @@ def p_function(p):
 
 def p_fun_scope(p):
 	'''fun : FUN ID'''
-	p[0] = p[2]
+	p[0] = Node('',[],[p[2]])
 	# Miro si el nombre de la funcion ya esta en current
 	re=symtab.redeclaration(p[2])
 	if re:
@@ -176,7 +176,12 @@ def p_param_4(p):
 def p_param_5(p):
 	'''param : ID COLON type'''
 	p[0] = Node('',[p[3]],p[1])
-	p[0].type=p[3]
+	p[0].name=p[1]
+	p[0].typ=p[3].typ
+	
+	a=symtab.banf(p[0].name,p[0].typ)
+	if a :
+		print "#Error# redeclaracion de identificador '%s' en linea %i" % (p[0].name,a.lineno)
 
 def p_locals_1(p):
 	'''locals : dec_list SEMICOLON'''
@@ -210,12 +215,14 @@ def p_var_dec_2(p):
 def p_type_3(p):
 	'''type : INT LBRACKET expression RBRACKET'''
 	p[0] = Node('type',[p[3]],p[1])
-	p[0].type=p[1]
+	p[0].typ="int["+str(p[3].value)+"]"
+	#print "\n/////// %s\n" % dir(p[0])
+	#print "*type: %s\n" % p[0].typ
 
 def p_type_4(p):
 	'''type : FLOAT LBRACKET expression RBRACKET'''
 	p[0] = Node('type',[p[3]],p[1])
-	[0].type=p[1]
+	p[0].typ="int["+str(p[3].value)+"]"
 
 def p_staments_1(p):
 	'''staments : stament'''
@@ -236,13 +243,13 @@ def p_stament_2(p):
 	p[0] = Node('if',[p[2],p[4],p[5]])
 
 def p_stament_3(p):
-	'''stament : location_read COLONEQUAL expression''' #assing
+	'''stament : location_read COLONEQUAL expression''' #assign
 	p[0] = Node('assign',[p[1],p[3]])
-	lr=symtab.findS(p[1])
-	print "<<<<<ID>>>>>: ",p[1]
-	print "---- %s ----", lr
-	if lr:
-		print "#Error# variable no declarada '%s' en la linea %i " % (p[1],lr.lineno)
+	a=symtab.findS(p[1].name)
+	##print "<<<<<ID>>>>>: ",p[1].name
+	##print "---- %s ----", a
+	if a:
+		print "#Error# variable no declarada '%s' en la linea %i " % (p[1].name,a.lineno)
 
 def p_stament_4(p):
 	'''stament : PRINT LPAREN TEXT RPAREN'''
@@ -263,9 +270,8 @@ def p_stament_7(p):
 def p_stament_8(p):
 	'''stament : ID LPAREN expression_list RPAREN''' #call
 	f=symtab.findS(p[1])
-	print "\ndir(f) %s\n\n" % dir(f)
 	if f:
-		print "#Error# Función no declarada '%s' en la linea %i " % (p[1],f.lineno)
+		print "#Error# Función no declarada '%s' en la linea" % (p[1])
 
 	if hasattr(p[3],'arg'):
 		p[0] = Node('',[p[3]],p[1])
@@ -280,7 +286,7 @@ def p_stament_8(p):
 			ind=i+1
 
 	if not f and funcstack[ind] != p[0].arg:
-		print "#Error# Numero de argumentos erroneo en '%s' en la linea %i" % (p[1],f.lineno)
+		print "#Error# Numero de argumentos erroneo en '%s' en la linea" % (p[1])
 
 def p_stament_9(p):
 	'''stament : SKIP'''
@@ -304,14 +310,14 @@ def p_else_2(p):
 	
 def p_location_read_1(p):
 	'''location_read : ID'''
-	#p[0] = Node('',[],p[1])
-	#p[0].id=p[1]
-	p[0] = p[1]
+	p[0] = Node('',[],p[1])
+	p[0].name=p[1]
+	#p[0] = p[1]
 
 def p_location_read_2(p):
 	'''location_read : ID LBRACKET expression RBRACKET'''
 	p[0] = Node('',[p[3]],p[1])
-	p[0].id=p[1]
+	p[0].name=p[1]
 
 def p_expression_1(p):
 	'''expression : expression PLUS expression'''
@@ -329,8 +335,17 @@ def p_expression_4(p):
 	'''expression : expression MINUS expression'''
 	p[0] = Node('',[p[1],p[3]],p[2])
 
-def p_expression_5(p):
-	'''expression : UMINUS expression'''
+#def p_expression_5(p):
+#	'''expression : UMINUS expression'''
+#	p[0] = Node('uminus',[p[2]])
+
+
+def p_expressionUNO(p):
+	'''expression : MINUS expression'''
+	p[0] = Node('uminus',[p[2]])
+
+def p_expressionDOS(p):
+	'''expression : PLUS expression'''
 	p[0] = Node('uminus',[p[2]])
 
 def p_expression_6(p):
@@ -352,10 +367,14 @@ def p_expression_9(p):
 def p_expression_10(p):
 	'''expression : INUMBER'''
 	p[0] = Node('',[],p[1])
+	p[0].value = p[1]
+	p[0].typ = "int"
 
 def p_expression_11(p):
 	'''expression : FNUMBER'''
 	p[0] = Node('',[],p[1])
+	p[0].value = p[1]
+	p[0].typ="float"
 
 def p_expression_12(p):
 	'''expression : INT LPAREN expression RPAREN'''
@@ -404,24 +423,24 @@ def p_relation_6(p):
 	'''relation : expression DISTINT expression'''
 	p[0] = Node('relation',[p[1],p[3]],p[2])
 
-def p_relation_7(p):
-	'''relation : expression NOT expression'''
-	p[0] = Node('relation',[p[1],p[3]],p[2])
+#def p_relation_7(p):
+#	'''relation : expression NOT expression'''
+#	p[0] = Node('relation',[p[1],p[3]],p[2])
 
 def p_relation_8(p):
-	'''relation : expression OR expression'''
+	'''relation : relation OR relation'''
 	p[0] = Node('relation',[p[1],p[3]],p[2])
 
 def p_relation_9(p):
-	'''relation : expression AND expression'''
+	'''relation : relation AND relation'''
 	p[0] = Node('relation',[p[1],p[3]],p[2])
 
 def p_relation_10(p):
-	'''relation : NOT expression'''
+	'''relation : NOT relation'''
 	p[0] = Node('relation',[p[2]],p[1])
 
 def p_relation_11(p):
-	'''relation : LPAREN expression RPAREN'''
+	'''relation : LPAREN relation RPAREN'''
 	p[0] = Node('relation',[p[2]])
 
 def p_empty(p):
@@ -432,10 +451,14 @@ def p_empty(p):
 Error=0
 
 def p_error(p):
+	#print dir(p)
 	global Error
 	Error +=1
-	print "#Error# de sintaxis en o cerca de -> '%s'" % p.value,
-	print "linea: %i " % p.lineno
+	if hasattr(p,'value'):	
+		print "#Error# de sintaxis en o cerca de -> '%s'" % p.value,
+		print "linea: %i col: %i" % (p.lineno,p.lexpos)
+	else:
+		print "#Error# léxico"
 
 parser = yacc.yacc(debug=1)
 
@@ -444,12 +467,18 @@ parser = yacc.yacc(debug=1)
 #
 
 try:
-	f = open(sys.argv[1])
+	Error=0
+	if sys.argv[1] == '-t':
+		f = open(sys.argv[2])
+	else:
+		pass
+		f = open(sys.argv[1])
+
 	res = parser.parse(f.read())
-	if f: #Muestro el AST
+	if f and sys.argv[1] == '-t': #Muestro el AST 
 		if Error==0:
 			print "\n[    -----AST-----    ]"
-			#dump_tree(res)
+			dump_tree(res)
 			print "[____-----End-----____]"
 			pass
 
