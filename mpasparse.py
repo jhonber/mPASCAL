@@ -87,36 +87,27 @@ def p_funclist_2(p):
 	p[0] = p[1]
 
 funcstack = [ ] # Pila de funciones
-currentf  = None # Funcion actual
 
 def p_function(p):
 	'''function : fun arguments locals BEGIN staments END'''
 	p[0] = Node('func', [p[1],p[2],p[3],p[5]])
-	p[0].typ="int"
-	#print "sSSSSS"
-	#print "current: ",currentf
-	##print "funcstack: ",funcstack
-	#print "sSSSSS"
-	# Hago pop a la pila
-	### symtab.banf(p[2].name,p[2].typ)
+	#p[0].typ="int"
+	
 	symtab.pop_scope()
 	
 
 def p_fun_scope(p):
 	'''fun : FUN ID'''
 	p[0] = Node('',[],[p[2]])
+	p[0].typ = "int"
 	# Miro si el nombre de la funcion ya esta en current
 	re=symtab.redeclaration(p[2])
 	if re:
 		print "#Error# redeclaracion de funcion '%s' en linea %i" % (re.name,re.lineno)
 	else: #Sino esta redefinido lo agrega a la tabla
-		symtab.baf(p[2])
+		symtab.baf(p[2],"int")
 	
 	funcstack.append(p[2])
-	try:
-		currentf = funcstack[-1]
-	except IndexError:
-		currentf = None
 	
 	#Creo un nuevo scope
 	symtab.new_scope()
@@ -132,7 +123,14 @@ def p_argument_2(p):
 	'''arguments : LPAREN declaration_variables RPAREN'''
 	p[0] = p[2]
 	p[0].arg=len(p[2].children)
-	funcstack.insert(len(funcstack),p[0].arg)
+
+
+##	Intengo colocar en la tabla de simbolos inf de los
+	#print "\n\nFun: %s\n\n" % p[2].children[0].typ
+	for i in p[2].children:
+		#print ": i-",i.typ
+		symtab.addarg(i.typ)
+##
 
 	# Para ponerle los artributos a las funciones el numero de argumentos
 	symtab.baf(funcstack[-1],p[2].arg)
@@ -145,7 +143,7 @@ def p_declaration_variables_1(p):
 def p_declaration_variables_2(p):
 	'''declaration_variables : declaration_variables COMMA param'''
 	p[1].append(p[3])
-	p[0] = p[1]
+	p[0] = p[1]	
 
 def p_param_2(p):
 	'''param : ID COLON ID'''
@@ -153,14 +151,16 @@ def p_param_2(p):
 
 def p_param_3(p):
 	'''param : ID COLON INT'''
+
 	p[0] = Node('',[],[p[1],p[3]])
 	p[0].clase = "ident"
 	p[0].typ = p[3]
 	p[0].name = p[1]
-
+	
 	a=symtab.banf(p[0].name,p[0].typ)
 	if a :
 		print "#Error# redeclaracion de identificador '%s' en linea %i" % (p[0].name,a.lineno)
+	
 
 def p_param_4(p):
 	'''param : ID COLON FLOAT'''
@@ -179,15 +179,20 @@ def p_param_5(p):
 	p[0] = Node('',[p[3]],p[1])
 	p[0].name=p[1]
 	p[0].typ=p[3].typ
-	
-	a=symtab.banf(p[0].name,p[0].typ)
+
+	a=symtab.banf(p[0].name,p[3].typ)
 	if a :
 		print "#Error# redeclaracion de identificador '%s' en linea %i" % (p[0].name,a.lineno)
 
 def p_locals_1(p):
 	'''locals : dec_list SEMICOLON'''
 	p[0] = p[1]
-	symtab.banf(p[1].name,p[1].typ)
+	if hasattr(p[1], "typ"):
+		typ = p[1].typ
+	else:
+		typ=None
+	symtab.banf(p[1].name,typ)
+
 
 def p_locals_2(p):
 	'''locals : empty'''
@@ -198,7 +203,8 @@ def p_dec_list_1(p):
 	p[0] = Node('locals',[p[1]])
 	p[0].name = p[1].name
 	p[0].clase = "ident"
-	p[0].typ = p[1].typ
+	if hasattr(p[1], "typ"):
+		p[0].typ = p[1].typ
 
 def p_dec_list_2(p):
 	'''dec_list : dec_list SEMICOLON var_dec'''
@@ -245,8 +251,16 @@ def p_stament_3(p):
 	'''stament : location_read COLONEQUAL expression''' #assign
 	p[0] = Node('assign',[p[1],p[3]])
 	a=symtab.findS(p[1].name)
-	##print "<<<<<ID>>>>>: ",p[1].name
-	##print "---- %s ----", a
+
+	if hasattr(p[1], "typ"):
+		typ=p[1].typ
+	else:
+		typ=None
+
+	s=symtab.banf2(p[1].name,typ)
+	if not s:
+		print "#Error# Assign '%s' error de tipos" % (p[1].name)
+
 	if a:
 		print "#Error# variable no declarada '%s' en la linea %i " % (p[1].name,a.lineno)
 
@@ -268,27 +282,41 @@ def p_stament_7(p):
 
 def p_stament_8(p):
 	'''stament : ID LPAREN expression_list RPAREN''' #call
-	f=symtab.findS(p[1])
-	#print "\n### %s \n" % dir(f)
-	if f:
+	f=symtab.findS2(p[1])
+
+	args = len(p[3].children)
+	if 	p[3].leaf:
+		args += 1
+
+	if not f:
 		print "#Error# Función no declarada '%s' " % (p[1]),
 		if hasattr(f,'lineno'):
 			print "en la linea",f.lineno
-
-	if hasattr(p[3],'arg'):
+	else:
+		##print "ARgs= ",args,"len(f.num)=",len(f.numpar)
+		
+		if args != len(f.numpar):
+			print "#Error# Numero de argumentos erroneo en '%s'" % f.name
+		else:
+			if 	p[3].leaf:
+				#print "adadsdsad: ", p[3].typ , ":::" , f.name,f.numpar
+				if p[3].typ != f.numpar[0]:
+					print "#Error# Tipos de argumentos erroneo en'%s'" % f.name
+				else:
+					for i in range(0,len(p[3].children)):
+						##print "p[3].children[i]= ",p[3].children[i],p[3].children[i].typ
+						##print "f.numpar[i+1]: ",f.numpar[i+1]
+						if hasattr(p[3].children[i],'typ'):
+							if p[3].children[i].typ != f.numpar[i+1]:
+								print "#Error# Tipos de argumentos erroneo en'%s'" % f.name
+								break
+						
+	#print "tiene argumentos arG? ",p[3].typ
+	if hasattr(p[3],'typ'):
 		p[0] = Node('',[p[3]],p[1])
-		p[0].arg = 0
+		p[0].typ = p[3].typ
 	else:
 		p[0] = Node('',[p[3]],p[1])
-		p[0].arg = len(p[3].children)+1
-	
-	ind=0
-	for i in range(0,len(funcstack)):
-		if p[1] == funcstack[i]:
-			ind=i+1
-
-	if not f and funcstack[ind] != p[0].arg:
-		print "#Error# Numero de argumentos erroneo en '%s' en la linea" % (p[1])
 
 def p_stament_9(p):
 	'''stament : SKIP'''
@@ -319,7 +347,13 @@ def p_location_read_1(p):
 def p_location_read_2(p):
 	'''location_read : ID LBRACKET expression RBRACKET'''
 	p[0] = Node('',[p[3]],p[1])
-	p[0].name=p[1]
+	p[0].name = p[1]
+
+	if hasattr(p[3],'typ'):
+		if p[3].typ != 'int':
+			print "#Error# El indice de un vector debe ser entero '%s'" % f.name
+		else:
+			p[0].typ = p[3].typ
 
 def p_expression_1(p):
 	'''expression : expression PLUS expression'''
@@ -345,6 +379,7 @@ def p_expression_4(p):
 def p_expressionUNO(p):
 	'''expression : MINUS expression'''
 	p[0] = Node('uminus',[p[2]])
+	p[0].typ = 'um'
 
 def p_expressionDOS(p):
 	'''expression : PLUS expression'''
@@ -357,14 +392,29 @@ def p_expression_6(p):
 def p_expression_7(p):
 	'''expression : ID LPAREN expression_list RPAREN'''
 	p[0] = Node('call',[p[3]],p[1])
+	#print "dir ",dir(p[1]),"name: ",p[1]
+	f = symtab.findS2(p[1])
+	##print "**dir ",dir(f),"name: ",f.name
+	if f:
+		p[0].typ = "int"
 
 def p_expression_8(p):
 	'''expression : ID'''
 	p[0] = Node('',[],p[1])
+	f = symtab.findS2(p[1])
+	if f:
+		#print "\n* %s *\n" % dir(f)
+		p[0].typ = f.typ
 
 def p_expression_9(p):
 	'''expression : ID LBRACKET expression RBRACKET'''
 	p[0] = Node('', [p[3]],p[1])
+
+	if hasattr(p[3],'typ'):
+		if p[3].typ != 'int':
+			print "#Error# El indice de un vector debe ser entero '%s'" % f.name
+		else:
+			p[0].typ = p[3].typ
 
 def p_expression_10(p):
 	'''expression : INUMBER'''
@@ -376,19 +426,22 @@ def p_expression_11(p):
 	'''expression : FNUMBER'''
 	p[0] = Node('',[],p[1])
 	p[0].value = p[1]
-	p[0].typ="float"
+	p[0].typ= "float"
 
 def p_expression_12(p):
 	'''expression : INT LPAREN expression RPAREN'''
 	p[0] = Node('cast',[p[3]],p[1])
+	p[0].typ = "int"
 
 def p_expression_13(p):
 	'''expression : FLOAT LPAREN expression RPAREN'''
 	p[0] = Node('cast',[p[3]],p[1])
+	p[0].typ = "float"
 
 def p_expression_list_1(p):
 	'''expression_list : expression'''
 	p[0] = p[1]
+	#argstack2.insert(len(argstack2),p[1].name)
 
 def p_expression_list_2(p):
 	'''expression_list : expression_list COMMA expression'''
@@ -468,7 +521,6 @@ parser = yacc.yacc(debug=1)
 #
 
 try:
-	Error=0
 	if sys.argv[1] == '-t':
 		f = open(sys.argv[2])
 	else:

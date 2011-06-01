@@ -11,6 +11,7 @@ current = None
 class Symbol:
 	def __init__(self,name):
 		self.name=name
+		self.numpar=[]
 
 	def __repr__(self):
 		a= self.name
@@ -18,7 +19,9 @@ class Symbol:
 
 	def __str__(self):
 		return self.name
-	
+
+	def appd(self,num):
+		self.numpar.append(num)
 
 
 def new_scope():
@@ -83,6 +86,17 @@ def banf(name,typ=None):
 				#print "#REDECLARADO# %s" % s.name
 				return s
 
+def banf2(name,typ=None):
+	for s in current:
+		if s.name == name:
+			if not (hasattr(s,'clase') or hasattr(s,'typ')):
+				s.clase = 'ident'
+				s.typ=typ
+			if hasattr(s,'typ'):
+				if s.typ != typ:
+					return None
+			return s
+
 # Funcion para que chequea si una funcion ya ha sido declarada
 def redeclaration(name):
 	for s in current:
@@ -107,6 +121,11 @@ def arguments(name,arg):
 			pass
 	return False
 
+# Para agregar inf de los arguments
+def addarg(num):
+	scopes[-2][-1].appd(num)
+	##print "\n#_____#",scopes,"\n"
+
 
 # Busca identificador en la tabla de simbolos
 def findS(name):
@@ -121,6 +140,20 @@ def findS(name):
 			if s.name==name and (hasattr(s,'typ') or hasattr(s,'clase')):
 				return None
 	return last[-1]
+
+# Busca identificador en la tabla de simbolos
+def findS2(name):
+	##print ":::::___findS__::::"
+	##print "scopes: ",scopes
+	for n in range(len(scopes)-1,-1,-1):
+		for s in scopes[n]:
+			##print "scopes[%i]: %s" % (n,scopes[n])
+			##print "s: ",s
+			##print "dir(s) ", dir(s)
+			##print ":::::__EndFindS___::::"
+			if s.name==name and (hasattr(s,'typ') or hasattr(s,'clase')):
+				return s
+	return None
 
 def buscarSv(name):
 	for n in range(len(scopes)-1,-1,-1):
