@@ -31,7 +31,7 @@ tokens = reserved + (
 'ID', 
 'INUMBER',
 'FNUMBER',
-'UMINUS',
+#'UMINUS',
 ##'CHARACTER',
 'TEXT',
 )

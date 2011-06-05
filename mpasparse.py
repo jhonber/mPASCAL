@@ -66,7 +66,7 @@ precedence =(
     ('left', 'NOT'),
     ('left', 'PLUS', 'MINUS'),
     ('left', 'MULT', 'DIVIDE'),
-	('right', 'UMINUS','ELSE'),
+	('right', 'ELSE'),
     )
 
 #
@@ -315,9 +315,13 @@ def p_stament_8(p):
 	#print "tiene argumentos arG? ",p[3].typ
 	if hasattr(p[3],'typ'):
 		p[0] = Node('',[p[3]],p[1])
+		p[0].name = p[1]
+		p[0].call = 1
 		p[0].typ = p[3].typ
 	else:
 		p[0] = Node('',[p[3]],p[1])
+		p[0].call = 1
+		p[0].name = p[1]
 
 def p_stament_9(p):
 	'''stament : SKIP'''
