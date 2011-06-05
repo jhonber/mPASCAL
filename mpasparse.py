@@ -99,6 +99,7 @@ def p_function(p):
 def p_fun_scope(p):
 	'''fun : FUN ID'''
 	p[0] = Node('',[],[p[2]])
+	p[0].name = p[2]
 	p[0].typ = "int"
 	# Miro si el nombre de la funcion ya esta en current
 	re=symtab.redeclaration(p[2])
@@ -519,7 +520,7 @@ parser = yacc.yacc(debug=1)
 #
 #Leo el archivo de entrada
 #
-
+'''
 try:
 	if sys.argv[1] == '-t':
 		f = open(sys.argv[2])
@@ -537,4 +538,5 @@ try:
 
 except IOError:
 		print "Error al leer el archivo!"
+'''
 
