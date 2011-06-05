@@ -1,6 +1,6 @@
 def generate(out,top):
     print >>out, "! Creado por mpascal.py"
-    print >>out, "! Jhon Ricardo, IS744 (2011-1)"
+    print >>out, "! Jhon IS744 (2011-1)"
 
 def emit_program(out,top):
 	for i in range (0,len(top.children)):
