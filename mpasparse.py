@@ -251,6 +251,7 @@ def p_stament_2(p):
 def p_stament_3(p):
 	'''stament : location_read COLONEQUAL expression''' #assign
 	p[0] = Node('assign',[p[1],p[3]])
+	p[0].assign = 1
 	a=symtab.findS(p[1].name)
 
 	if hasattr(p[1], "typ"):
@@ -325,7 +326,7 @@ def p_stament_8(p):
 
 def p_stament_9(p):
 	'''stament : SKIP'''
-	p[0] = Node('',[],p[1])
+	p[0] = Node('skip',[p[1]])
 
 def p_stament_10(p):
 	'''stament : BREAK'''
