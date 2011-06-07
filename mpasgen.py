@@ -51,6 +51,10 @@ def emit_read(out,s):
 
 def emit_write(out,s):
 	print >>out, "\n! write (start)"
+	expr = s.children[0]
+	eval_expression(out,expr)
+	print >>out, "! expr := pop"
+	print >>out, "! write(expr)"
 	print >>out, "! write (end)"
 
 def emit_skip(out,s):
@@ -59,6 +63,9 @@ def emit_skip(out,s):
 
 def emit_assign(out,s):
 	print >>out, "\n! assign (start)"
+	expr = s.children[1]
+	eval_expression(out,expr)
+	print >>out, "! assign := pop"
 	print >>out, "! assign (end)"
 
 def emit_while(out,s):
@@ -77,4 +84,46 @@ def emit_if(out,s):
 	else:
 		emit_statement(out,s.children[1])
 	print >>out, "\n! if (end)"
+
+#
+# Evaluacion de expresiones
+#
+def eval_expression(out,expr):
+	if expr.name == 'number':
+		print >>out, "!   push", expr.value
+
+	elif expr.name == 'vec':
+		eval_expression(out,expr.children[0])
+		print >>out, "!   index := pop"
+		print >>out, "!   push %s[index]" % expr.value
+
+	elif expr.name == 'id':
+		print >>out, "!   push", expr.value
+
+	elif expr.name == '+':
+		left = expr.children[0]
+		right = expr.children[1]
+		eval_expression(out,left)
+		eval_expression(out,right)
+		print >>out, "!   add"
+	elif expr.name == '-':
+		left = expr.children[0]
+		right = expr.children[1]
+		eval_expression(out,left)
+		eval_expression(out,right)
+		print >>out, "!   sub"
+
+	elif expr.name == '*':
+		left = expr.children[0]
+		right = expr.children[1]
+		eval_expression(out,left)
+		eval_expression(out,right)
+		print >>out, "!   mul"
+
+	elif expr.name == '/':
+		left = expr.children[0]
+		right = expr.children[1]
+		eval_expression(out,left)
+		eval_expression(out,right)
+		print >>out, "!   div"
 

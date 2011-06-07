@@ -178,7 +178,8 @@ def p_param_4(p):
 def p_param_5(p):
 	'''param : ID COLON type'''
 	p[0] = Node('',[p[3]],p[1])
-	p[0].name=p[1]
+	p[0].name = p[1]
+	p[0].value = p[1]
 	p[0].typ=p[3].typ
 
 	a=symtab.banf(p[0].name,p[3].typ)
@@ -273,7 +274,7 @@ def p_stament_4(p):
 def p_stament_5(p):
 	'''stament : WRITE LPAREN expression RPAREN'''
 	p[0] = Node('write',[p[3]])
-
+	
 def p_stament_6(p):
 	'''stament : READ LPAREN location_read RPAREN'''
 	p[0] = Node('read',[p[3]])
@@ -347,13 +348,15 @@ def p_else_2(p):
 def p_location_read_1(p):
 	'''location_read : ID'''
 	p[0] = Node('',[],p[1])
-	p[0].name=p[1]
+	p[0].name = p[1]
+	p[0].value = p[1]
 	#p[0] = p[1]
 
 def p_location_read_2(p):
 	'''location_read : ID LBRACKET expression RBRACKET'''
 	p[0] = Node('',[p[3]],p[1])
 	p[0].name = p[1]
+	p[0].value = p[1]
 
 	if hasattr(p[3],'typ'):
 		if p[3].typ != 'int':
@@ -363,19 +366,19 @@ def p_location_read_2(p):
 
 def p_expression_1(p):
 	'''expression : expression PLUS expression'''
-	p[0] = Node('',[p[1],p[3]],p[2])
+	p[0] = Node('+',[p[1],p[3]])
 
 def p_expression_2(p):
 	'''expression : expression DIVIDE expression'''
-	p[0] = Node('',[p[1],p[3]],p[2])
+	p[0] = Node('/',[p[1],p[3]])
 
 def p_expression_3(p):
 	'''expression : expression MULT expression'''
-	p[0] = Node('',[p[1],p[3]],p[2])
+	p[0] = Node('*',[p[1],p[3]])
 
 def p_expression_4(p):
 	'''expression : expression MINUS expression'''
-	p[0] = Node('',[p[1],p[3]],p[2])
+	p[0] = Node('-',[p[1],p[3]])
 
 #def p_expression_5(p):
 #	'''expression : UMINUS expression'''
@@ -406,7 +409,8 @@ def p_expression_7(p):
 
 def p_expression_8(p):
 	'''expression : ID'''
-	p[0] = Node('',[],p[1])
+	p[0] = Node('id',[],p[1])
+	p[0].value = p[1]
 	f = symtab.findS2(p[1])
 	if f:
 		#print "\n* %s *\n" % dir(f)
@@ -414,7 +418,8 @@ def p_expression_8(p):
 
 def p_expression_9(p):
 	'''expression : ID LBRACKET expression RBRACKET'''
-	p[0] = Node('', [p[3]],p[1])
+	p[0] = Node('vec', [p[3]],p[1])
+	p[0].value = p[1]
 
 	if hasattr(p[3],'typ'):
 		if p[3].typ != 'int':
@@ -424,13 +429,13 @@ def p_expression_9(p):
 
 def p_expression_10(p):
 	'''expression : INUMBER'''
-	p[0] = Node('',[],p[1])
+	p[0] = Node('number',[],p[1])
 	p[0].value = p[1]
 	p[0].typ = "int"
 
 def p_expression_11(p):
 	'''expression : FNUMBER'''
-	p[0] = Node('',[],p[1])
+	p[0] = Node('number',[],p[1])
 	p[0].value = p[1]
 	p[0].typ= "float"
 

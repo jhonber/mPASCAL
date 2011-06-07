@@ -19,3 +19,6 @@ if top:
 	mpasgen.generate(outf,top)
 	mpasgen.emit_program(outf,top)
 	outf.close()
+
+	if sys.argv[-1] == '-t':
+		mpasparse.dump_tree(top)
