@@ -114,6 +114,24 @@ def eval_expression(out,expr):
 	if expr.name == 'number':
 		print >>out, "!   push", expr.value
 
+	if expr.name == 'call':
+		if not expr.children[0].children:
+			eval_expression(out,expr.children[0])
+			print >>out,"! arg1 := pop"
+			print >>out,"! push %s(arg1) \n" % expr.value
+
+		else:
+			eval_expression(out,expr.children[0])
+			print >>out,"!   arg1 := pop"
+			args="arg1"
+			cont=2
+			for i in expr.children[0].children:
+				eval_expression(out,i)
+				print >>out,"!   arg%i := pop" % cont
+				args +=",arg"+str(cont)
+				cont +=1
+			print >>out,"!   push %s(%s)" % (expr.value,args)
+		
 	elif expr.name == 'vec':
 		eval_expression(out,expr.children[0])
 		print >>out, "!   index := pop"
