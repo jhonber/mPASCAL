@@ -85,13 +85,27 @@ def emit_while(out,s):
 
 def emit_if(out,s):
 	print >>out, "\n! if (start)"
+	relop = s.children[0]
+	print >>out, "!   if false: goto else"
 	if s.children[1].name == "staments":
 		for i in range(0,len(s.children[1].children)):
 			statement = s.children[1].children[i]
 			emit_statement(out,statement)
 	else:
 		emit_statement(out,s.children[1])
-	print >>out, "\n! if (end)"
+	
+	print >>out, "! goto next "
+	print >>out, "! else:"
+	if s.children[2].name == "else":
+		if s.children[2].children[0].name == "staments":
+			for i in range(0,len(s.children[2].children[0].children)):
+				statement = s.children[2].children[0].children[i]
+				emit_statement(out,statement)
+		else:
+			emit_statement(out,s.children[2].children[0])
+
+	print >>out, "! next: "
+	print >>out, "! if (end)\n"
 
 #
 # Evaluacion de expresiones
