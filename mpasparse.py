@@ -157,6 +157,7 @@ def p_param_3(p):
 	p[0].clase = "ident"
 	p[0].typ = p[3]
 	p[0].name = p[1]
+	p[0].value = p[1]
 	
 	a=symtab.banf(p[0].name,p[0].typ)
 	if a :
@@ -318,12 +319,14 @@ def p_stament_8(p):
 	if hasattr(p[3],'typ'):
 		p[0] = Node('',[p[3]],p[1])
 		p[0].name = p[1]
+		p[0].value = p[1]
 		p[0].call = 1
 		p[0].typ = p[3].typ
 	else:
 		p[0] = Node('',[p[3]],p[1])
 		p[0].call = 1
 		p[0].name = p[1]
+		p[0].value = p[1]
 
 def p_stament_9(p):
 	'''stament : SKIP'''
@@ -401,6 +404,7 @@ def p_expression_6(p):
 def p_expression_7(p):
 	'''expression : ID LPAREN expression_list RPAREN'''
 	p[0] = Node('call',[p[3]],p[1])
+	p[0].value = p[1]
 	#print "dir ",dir(p[1]),"name: ",p[1]
 	f = symtab.findS2(p[1])
 	##print "**dir ",dir(f),"name: ",f.name
@@ -466,27 +470,27 @@ def p_expression_list_3(p):
 
 def p_relation_1(p):
 	'''relation : expression GREATER expression'''
-	p[0] = Node('relation',[p[1],p[3]],p[2])
+	p[0] = Node('>',[p[1],p[3]])
 
 def p_relation_2(p):
 	'''relation :  expression DEQUAL expression'''
-	p[0] = Node('relation',[p[1],p[3]],p[2])
+	p[0] = Node('==',[p[1],p[3]])
 
 def p_relation_3(p):
 	'''relation : expression LESS expression'''
-	p[0] = Node('relation',[p[1],p[3]],p[2])
+	p[0] = Node('<',[p[1],p[3]])
 
 def p_relation_4(p):
 	'''relation : expression GREATEREQUAL expression'''
-	p[0] = Node('relation',[p[1],p[3]],p[2])
+	p[0] = Node('>=',[p[1],p[3]])
 
 def p_relation_5(p):
 	'''relation : expression LESSEQUAL expression'''
-	p[0] = Node('relation',[p[1],p[3]],p[2])
+	p[0] = Node('<=',[p[1],p[3]])
 
 def p_relation_6(p):
 	'''relation : expression DISTINT expression'''
-	p[0] = Node('relation',[p[1],p[3]],p[2])
+	p[0] = Node('!=',[p[1],p[3]])
 
 #def p_relation_7(p):
 #	'''relation : expression NOT expression'''
@@ -494,15 +498,15 @@ def p_relation_6(p):
 
 def p_relation_8(p):
 	'''relation : relation OR relation'''
-	p[0] = Node('relation',[p[1],p[3]],p[2])
+	p[0] = Node('or',[p[1],p[3]])
 
 def p_relation_9(p):
 	'''relation : relation AND relation'''
-	p[0] = Node('relation',[p[1],p[3]],p[2])
+	p[0] = Node('and',[p[1],p[3]])
 
 def p_relation_10(p):
 	'''relation : NOT relation'''
-	p[0] = Node('relation',[p[2]],p[1])
+	p[0] = Node('not',[p[2]])
 
 def p_relation_11(p):
 	'''relation : LPAREN relation RPAREN'''

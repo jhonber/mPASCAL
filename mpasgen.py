@@ -65,15 +65,23 @@ def emit_assign(out,s):
 	print >>out, "\n! assign (start)"
 	expr = s.children[1]
 	eval_expression(out,expr)
-	print >>out, "! assign := pop"
-	print >>out, "! assign (end)"
+	print >>out, "!   %s := pop" % s.children[0].name
+	print >>out, "! assign (end)\n"
 
 def emit_while(out,s):
-	print >>out, "\n! while (start)"
+	print >>out, "! while (start)"
+	print >>out, "! test:"
+	relop = s.children[0]
+	eval_expression(out,relop)
+	print >>out, "!   relop := pop" 
+	print >>out, "!   if not relop: goto done"
+
 	for i in range(0,len(s.children[1].children)):
 		statement = s.children[1].children[i]
 		emit_statement(out,statement)
-	print >>out, "\n! while (end)"
+	print >>out, "! goto test"
+	print >>out, "! done:"
+	print >>out, "! while (end)\n"
 
 def emit_if(out,s):
 	print >>out, "\n! if (start)"
@@ -106,6 +114,7 @@ def eval_expression(out,expr):
 		eval_expression(out,left)
 		eval_expression(out,right)
 		print >>out, "!   add"
+
 	elif expr.name == '-':
 		left = expr.children[0]
 		right = expr.children[1]
@@ -127,3 +136,65 @@ def eval_expression(out,expr):
 		eval_expression(out,right)
 		print >>out, "!   div"
 
+	elif expr.name == '>':
+		left = expr.children[0]
+		right = expr.children[1]
+		eval_expression(out,left)
+		eval_expression(out,right)
+		print >>out, "!   gt"
+
+	elif expr.name == '==':
+		left = expr.children[0]
+		right = expr.children[1]
+		eval_expression(out,left)
+		eval_expression(out,right)
+		print >>out, "!   eq"
+
+	elif expr.name == '<':
+		left = expr.children[0]
+		right = expr.children[1]
+		eval_expression(out,left)
+		eval_expression(out,right)
+		print >>out, "!   ls"
+
+	elif expr.name == '>=':
+		left = expr.children[0]
+		right = expr.children[1]
+		eval_expression(out,left)
+		eval_expression(out,right)
+		print >>out, "!   ge"
+
+	elif expr.name == '<=':
+		left = expr.children[0]
+		right = expr.children[1]
+		eval_expression(out,left)
+		eval_expression(out,right)
+		print >>out, "!   le"
+
+	elif expr.name == '!=':
+		left = expr.children[0]
+		right = expr.children[1]
+		eval_expression(out,left)
+		eval_expression(out,right)
+		print >>out, "!   dt"
+
+	elif expr.name == 'or':
+		left = expr.children[0]
+		right = expr.children[1]
+		eval_expression(out,left)
+		eval_expression(out,right)
+		print >>out, "!   or"
+
+	elif expr.name == 'and':
+		left = expr.children[0]
+		right = expr.children[1]
+		eval_expression(out,left)
+		eval_expression(out,right)
+		print >>out, "!   and"
+
+	elif expr.name == 'not':
+		left = expr.children[0]
+		right = expr.children[1]
+		eval_expression(out,left)
+		eval_expression(out,right)
+		print >>out, "!   not"
