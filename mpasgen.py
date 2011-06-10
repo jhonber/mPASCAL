@@ -1,19 +1,43 @@
+import StringIO
+data = StringIO.StringIO()
+
+cont = -1
+sp_cont = 64
+l_cont = 0
+t_cont = 0
+
 def generate(out,top):
-    print >>out, "! Creado por mpascal.py"
-    print >>out, "! Jhon IS744 (2011-1)"
+	print >>out, "! Creado por mpascal.py"
+	print >>out, "! Jhon IS744 (2011-1)"
+	print >>out, "   .section     \".text\""
 
 def emit_program(out,top):
 	print >>out,"\n! program"
 	for i in range (0,len(top.children)):
 		func=top.children[i]
 		emit_function(out,func)
+	print >>out,"\n    .section \".rodata\" \n"
 
 def emit_function(out,func):
 	fname = func.children[0].name
 	print >>out,"\n! function: %s (start) " % fname
-	#for i in range (0,len(func.children[-1].children)):
+	print >>out,"    .global %s \n" % fname
+	print >>out,"%s: \n" % fname
+	label = new_label()
+	sttms = func.children[2].children
+	args = func.children[0].children
+	local = func.children[1].children
+	#offset_p = allocate_locals(local)
+	#calcular_sp(out, args, local)
 	funcstatements = func.children[-1].children
 	emit_statements(out,funcstatements)
+	print >> out, "\n%s:" % label
+	if func.leaf =="main":
+		print >> out, "     mov 0, %o0"
+		print >> out, "     call_exit "
+		print >> out, "     nop"
+	print >> out, "     ret"
+	print >> out, "     restore"
 	print >>out,"\n! function: %s (end) " % fname
 
 def emit_statements(out,statements):
@@ -40,6 +64,14 @@ def emit_statement(out,s):
 		
 def emit_print(out,s):
 	print >>out, "\n! print (start)"
+	value = s.leaf
+	label = new_label()
+	print >> data, '%s:      .asciz "%s" ' % (label, value)
+	print >> out, '      sethi %%hi(%s), %%o0' % label
+	print >> out, '      or    %%0, %%lo(%s), %%o0' %label
+	print >> out, '      call  flprint'
+	print >> out, '      nop'
+	print >> out, "! print (end)"
 	print >>out, "! print (end)"
 
 def emit_call(out,s):
@@ -65,12 +97,15 @@ def emit_assign(out,s):
 	print >>out, "\n! assign (start)"
 	expr = s.children[1]
 	eval_expression(out,expr)
-	print >>out, "!   %s := pop" % s.children[0].name
-	print >>out, "! assign (end)\n"
+	result = pop(out)
+	print >>out, "     st %s, %s                ! %s := pop" % (result ,s.children[0].name,s.children[0].name)
+	print >>out, "! asig (end)"
 
 def emit_while(out,s):
 	print >>out, "! while (start)"
-	print >>out, "! test:"
+	test_label= new_label()
+	done_label= new_label()
+	print >>out, "%s:" % test_label
 	relop = s.children[0]
 	eval_expression(out,relop)
 	print >>out, "!   relop := pop" 
@@ -79,14 +114,16 @@ def emit_while(out,s):
 	for i in range(0,len(s.children[1].children)):
 		statement = s.children[1].children[i]
 		emit_statement(out,statement)
-	print >>out, "! goto test"
-	print >>out, "! done:"
+	print >>out, "! goto %s" % test_label
+	print >>out, "%s:" % done_label
 	print >>out, "! while (end)\n"
 
 def emit_if(out,s):
 	print >>out, "\n! if (start)"
+	if_label = new_label()
 	relop = s.children[0]
-	print >>out, "!   if false: goto else"
+	print >>out, "! relop := pop"
+	print >>out, "! if false: goto %s:" % if_label
 	if s.children[1].name == "staments":
 		for i in range(0,len(s.children[1].children)):
 			statement = s.children[1].children[i]
@@ -94,7 +131,8 @@ def emit_if(out,s):
 	else:
 		emit_statement(out,s.children[1])
 	
-	print >>out, "! goto next "
+	else_label = new_label()
+	print >>out, "! goto %s " % else_label
 	print >>out, "! else:"
 	if s.children[2].name == "else":
 		if s.children[2].children[0].name == "staments":
@@ -104,7 +142,7 @@ def emit_if(out,s):
 		else:
 			emit_statement(out,s.children[2].children[0])
 
-	print >>out, "! next: "
+	print >>out, "! %s: " % else_label
 	print >>out, "! if (end)\n"
 
 #
@@ -112,7 +150,7 @@ def emit_if(out,s):
 #
 def eval_expression(out,expr):
 	if expr.name == 'number':
-		print >>out, "!   push", expr.value
+		print >> out, '     mov %s, %s               ! push %s' %(expr.value,push(out),expr.value)
 
 	if expr.name == 'call':
 		if not expr.children[0].children:
@@ -138,35 +176,49 @@ def eval_expression(out,expr):
 		print >>out, "!   push %s[index]" % expr.value
 
 	elif expr.name == 'id':
-		print >>out, "!   push", expr.value
+		print >> out, '     mov %s, %s               ! push %s' %(expr.value,push(out),expr.value)
 
 	elif expr.name == '+':
 		left = expr.children[0]
 		right = expr.children[1]
 		eval_expression(out,left)
 		eval_expression(out,right)
-		print >>out, "!   add"
+		r = pop(out)
+		l = pop(out)
+		print >>out, "     add %s, %s, %s        ! add" %(l,r,push(out))
 
 	elif expr.name == '-':
 		left = expr.children[0]
 		right = expr.children[1]
 		eval_expression(out,left)
 		eval_expression(out,right)
-		print >>out, "!   sub"
+		r = pop(out)
+		l = pop(out)
+		print >>out, "     sub %s, %s, %s        ! sub" %(l,r,push(out))
 
 	elif expr.name == '*':
 		left = expr.children[0]
 		right = expr.children[1]
 		eval_expression(out,left)
 		eval_expression(out,right)
-		print >>out, "!   mul"
+		r = pop(out)
+		l = pop(out)
+		print >>out, "     mov %s,%%o0" %l
+		print >>out, "     call .mul                ! mult"
+		print >>out, "     mov %s,%%o1" %r
+		print >>out, "     mov %%o0, %s             ! push" % push(out)
 
 	elif expr.name == '/':
 		left = expr.children[0]
 		right = expr.children[1]
 		eval_expression(out,left)
 		eval_expression(out,right)
-		print >>out, "!   div"
+		r = pop(out)
+		l = pop(out)
+		print >>out, "     mov %s,%%o0" %l
+		print >>out, "     call .div             ! div"
+		print >>out, "     mov %s,%%o1" %r
+		print >>out, "     mov %%o0, %s          ! push" % push(out)
 
 	elif expr.name == '>':
 		left = expr.children[0]
@@ -230,3 +282,68 @@ def eval_expression(out,expr):
 		eval_expression(out,left)
 		eval_expression(out,right)
 		print >>out, "!   not"
+
+def new_label():
+	global cont
+	cont+=1
+	return ".L%s" % cont
+
+def calcular_sp(out, args, local):
+    global sp_cont
+    sp_cont += 4
+    for s in local:
+        if s.children[0].name == "vec":
+            temp = int(s.children[0].children[0].leaf)*4
+            sp_cont += temp
+        else:
+            sp_cont += 4
+    for s2 in args:
+        if s2.children[0].name == "vec":
+            temp = int(s2.children[0].children[0].leaf)*4
+            sp_cont += temp
+        else:
+            sp_cont += 4
+    while (sp_cont % 8) != 0:
+        sp_cont += 4
+    print >> out, '     save %%sp, -%d, %%sp' % sp_cont
+
+def allocate_locals(local):
+	offset = 0    
+	for s in local:
+		if s.children.name == "vec":
+			temp = int(s.children[0].children[0].leaf)*4
+			offset += temp
+		else:
+			offset += 4
+
+
+def push(out):
+    global l_cont
+    global t_cont
+    global sp_cont
+    if l_cont < 8 and t_cont != 8:
+        l = '%l'+str(l_cont)
+        l_cont +=1        
+    else:
+        if l_cont == 8:
+            l_cont = 0
+            t_cont = 8
+        l = '%l'+str(l_cont)
+        print >> out, "     st %s, [%%fp -%d]" % (l, sp_cont)
+        sp_cont +=4
+        l_cont +=1        
+    return l
+    
+def pop(out):
+    global l_cont
+    global t_cont
+    global sp_cont
+    if l_cont >= 0 and t_cont == 0:
+        l_cont -=1
+        l = '%l'+str(l_cont)
+    else:
+        l_cont = t_cont
+        t_cont = 0
+        l_cont -=1
+        l = '%l'+str(l_cont)
+    return l

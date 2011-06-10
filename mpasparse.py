@@ -263,7 +263,8 @@ def p_stament_3(p):
 
 	s=symtab.banf2(p[1].name,typ)
 	if not s:
-		print "#Error# Assign '%s' error de tipos" % (p[1].name)
+		pass
+		#print "#Error# Assign '%s' error de tipos" % (p[1].name)
 
 	if a:
 		print "#Error# variable no declarada '%s' en la linea %i " % (p[1].name,a.lineno)
